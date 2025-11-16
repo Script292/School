@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>School - Timetable Management</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+  <script src="firebase-db.js"></script>
+  <script src="translations.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">Shkolo - Timetable Manager</div>
+      <ul class="nav-menu">
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="timetable.html">Timetable</a></li>
+        <li><a href="students.html">Students</a></li>
+        <li><a href="teachers.html">Teachers</a></li>
+        <li><a href="classes.html">Classes</a></li>
+        <li><a href="#" onclick="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="management-container">
+    <div class="management-header">
+      <h1>📅 Admin Timetable Builder</h1>
+      <p>Create and manage class timetables with teacher assignments</p>
+    </div>
+
+    <!-- Class Selection -->
+    <section class="settings-card">
+      <h2>Select Class</h2>
+      <div class="form-row">
+        <div class="form-group" style="flex: 1;">
+          <label for="adminClassSelect">Class</label>
+          <select id="adminClassSelect"></select>
+        </div>
+        <div class="form-group" style="width: 200px; align-self: flex-end;">
+          <button class="btn-primary" id="loadClassTimetableBtn">Load Timetable</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Period Form -->
+    <section class="settings-card" id="periodFormArea" style="display: none;">
+      <h2>Add Period</h2>
+      <div class="period-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="adminPeriodName">Period Name</label>
+            <input id="adminPeriodName" placeholder="e.g., Mathematics, Period 1" />
+          </div>
+          <div class="form-group">
+            <label for="adminPeriodDay">Day</label>
+            <select id="adminPeriodDay">
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="adminPeriodStart">Start Time</label>
+            <input id="adminPeriodStart" type="time" />
+          </div>
+          <div class="form-group">
+            <label for="adminPeriodEnd">End Time</label>
+            <input id="adminPeriodEnd" type="time" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex: 1;">
+            <label for="adminTeacherSelect">Assign Teacher</label>
+            <select id="adminTeacherSelect">
+              <option value="">-- Select Teacher --</option>
+            </select>
+          </div>
+          <div class="form-group" style="width: 200px; align-self: flex-end;">
+            <button class="btn-success" id="addPeriodAdminBtn">Add Period</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Current Timetable Display -->
+    <section class="settings-card" id="timetableDisplayArea" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Timetable for <span id="adminClassTitle"></span></h2>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-primary" id="saveTimetableAdminBtn">Save</button>
+          <button class="btn-danger" id="clearTimetableAdminBtn">Clear</button>
+        </div>
+      </div>
+
+      <div id="adminTimetableGrid" style="display: grid; gap: 1rem;">
+        <!-- Days will be rendered here -->
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2025 Shkolo</p>
+    </div>
+  </footer>
+
+  <script>
+    let currentClassId = null;
+    let currentTimetable = [];
+    let allTeachers = [];
+
+    // Role check: Admin only
+    document.addEventListener('DOMContentLoaded', function() {
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
+      if (localStorage.getItem('userRole') !== 'Administrator') {
+        alert('Only administrators can manage timetables.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      loadClasses();
+      loadTeachers();
+      attachEventListeners();
+    });
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userRole');
+        window.location.href = 'login.html';
+      }
+    }
+
+    function loadClasses() {
+      let classes = JSON.parse(localStorage.getItem('classesData') || 'null');
+      if (!classes) classes = JSON.parse(localStorage.getItem('classes') || 'null');
+      if (!classes) {
+        classes = [
+          { id: '9-A', name: 'Grade 9-A' },
+          { id: '10-A', name: 'Grade 10-A' },
+          { id: '11-B', name: 'Grade 11-B' }
+        ];
+      }
+
+      const select = document.getElementById('adminClassSelect');
+      select.innerHTML = '';
+      classes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id || c.name;
+        opt.textContent = c.name || c.id;
+        select.appendChild(opt);
+      });
+
+      if (select.options.length) {
+        loadClassTimetable(select.options[0].value);
+      }
+    }
+
+    function loadTeachers() {
+      let teachers = JSON.parse(localStorage.getItem('teachersData') || 'null');
+      if (!teachers) teachers = JSON.parse(localStorage.getItem('teachers') || '[]');
+
+      if (!teachers || teachers.length === 0) {
+        teachers = [
+          { id: 1, firstName: 'Ahmed', lastName: 'Khan', subject: 'Mathematics' },
+          { id: 2, firstName: 'Fatima', lastName: 'Ali', subject: 'English' },
+          { id: 3, firstName: 'Hassan', lastName: 'Ibrahim', subject: 'Science' },
+          { id: 4, firstName: 'John', lastName: 'Smith', subject: 'History' }
+        ];
+      }
+
+      allTeachers = teachers;
+      const select = document.getElementById('adminTeacherSelect');
+      select.innerHTML = '<option value="">-- Select Teacher --</option>';
+      teachers.forEach(t => {
+        const opt = document.createElement('option');
+        const teacherName = t.firstName && t.lastName ? `${t.firstName} ${t.lastName}` : (t.name || 'Unknown');
+        opt.value = teacherName;
+        opt.textContent = `${teacherName} (${t.subject || 'N/A'})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function attachEventListeners() {
+      document.getElementById('loadClassTimetableBtn').onclick = function() {
+        const classId = document.getElementById('adminClassSelect').value;
+        loadClassTimetable(classId);
+      };
+
+      document.getElementById('addPeriodAdminBtn').onclick = function(e) {
+        e.preventDefault();
+        addPeriodToAdmin();
+      };
+
+      document.getElementById('saveTimetableAdminBtn').onclick = function() {
+        saveTimetableAdmin();
+      };
+
+      document.getElementById('clearTimetableAdminBtn').onclick = function() {
+        if (confirm('Clear this timetable?')) {
+          clearTimetableAdmin();
+        }
+      };
+    }
+
+    function loadClassTimetable(classId) {
+      currentClassId = classId;
+      document.getElementById('periodFormArea').style.display = 'block';
+      document.getElementById('timetableDisplayArea').style.display = 'block';
+      document.getElementById('adminClassTitle').textContent = classId;
+
+      const allTimetables = JSON.parse(localStorage.getItem('adminTimetables') || '{}');
+      currentTimetable = allTimetables[classId] || [];
+      renderAdminTimetable();
+    }
+
+    function addPeriodToAdmin() {
+      const name = document.getElementById('adminPeriodName').value.trim();
+      const day = document.getElementById('adminPeriodDay').value;
+      const start = document.getElementById('adminPeriodStart').value;
+      const end = document.getElementById('adminPeriodEnd').value;
+      const teacher = document.getElementById('adminTeacherSelect').value;
+
+      if (!name || !start || !end || !teacher) {
+        alert('Please fill all fields and select a teacher');
+        return;
+      }
+
+      const period = {
+        id: Date.now() + Math.random(),
+        name,
+        day,
+        start,
+        end,
+        teacher,
+        addedDate: new Date().toLocaleString()
+      };
+
+      currentTimetable.push(period);
+      renderAdminTimetable();
+
+      // Clear inputs
+      document.getElementById('adminPeriodName').value = '';
+      document.getElementById('adminPeriodStart').value = '';
+      document.getElementById('adminPeriodEnd').value = '';
+      document.getElementById('adminTeacherSelect').value = '';
+
+      alert('Period added!');
+    }
+
+    function renderAdminTimetable() {
+      const container = document.getElementById('adminTimetableGrid');
+      container.innerHTML = '';
+
+      if (currentTimetable.length === 0) {
+        container.innerHTML = '<p style="color: #999; grid-column: 1/-1;">No periods added yet.</p>';
+        return;
+      }
+
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      days.forEach(day => {
+        const dayPeriods = currentTimetable.filter(p => p.day === day).sort((a, b) => a.start.localeCompare(b.start));
+        
+        const dayCard = document.createElement('div');
+        dayCard.className = 'day-card';
+        dayCard.style.border = '2px solid #667eea';
+        
+        let html = `<h4 style="color: #667eea; margin-bottom: 0.8rem;">${day}</h4>`;
+
+        if (dayPeriods.length === 0) {
+          html += '<p style="color: #999;">No periods</p>';
+        } else {
+          dayPeriods.forEach(p => {
+            html += `
+              <div class="period-row" style="background: #f9f9f9; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.6rem;">
+                <div>
+                  <strong style="color: #667eea;">${p.name}</strong>
+                  <div style="font-size: 0.85rem; color: #666; margin-top: 0.3rem;">
+                    ⏰ ${p.start} - ${p.end}
+                  </div>
+                  <div style="font-size: 0.85rem; color: #555; margin-top: 0.3rem;">
+                    👨‍🏫 ${p.teacher}
+                  </div>
+                </div>
+                <button class="btn-delete btn-small" onclick="removePeriodAdmin(${p.id})">Remove</button>
+              </div>
+            `;
+          });
+        }
+
+        dayCard.innerHTML = html;
+        container.appendChild(dayCard);
+      });
+    }
+
+    function removePeriodAdmin(periodId) {
+      if (confirm('Remove this period?')) {
+        currentTimetable = currentTimetable.filter(p => p.id !== periodId);
+        renderAdminTimetable();
+      }
+    }
+
+    function saveTimetableAdmin() {
+      const allTimetables = JSON.parse(localStorage.getItem('adminTimetables') || '{}');
+      allTimetables[currentClassId] = currentTimetable;
+      localStorage.setItem('adminTimetables', JSON.stringify(allTimetables));
+      alert('Timetable for ' + currentClassId + ' saved successfully!');
+    }
+
+    function clearTimetableAdmin() {
+      currentTimetable = [];
+      const allTimetables = JSON.parse(localStorage.getItem('adminTimetables') || '{}');
+      delete allTimetables[currentClassId];
+      localStorage.setItem('adminTimetables', JSON.stringify(allTimetables));
+      renderAdminTimetable();
+      alert('Timetable cleared');
+    }
+  </script>
+</body>
+</html>

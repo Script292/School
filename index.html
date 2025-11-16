@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en"></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Welcome</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">School</div>
+            <ul class="nav-menu">
+                <li><a href="index.html" id="navHome">Home</a></li>
+                <li><a href="dashboard.html" id="navManagement">Management System</a></li>
+                <li><a href="contact.html" id="navContact">Contact</a></li>
+                <li style="position: relative;">
+                    <select id="langSelect" onchange="setLanguage(this.value)" style="padding: 0.5rem; border-radius: 5px; border: none; background: #667eea; color: white; cursor: pointer;">
+                        <option value="en">English</option>
+                        <option value="bg">Български</option>
+                    </select>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1 id="heroTitle">Welcome to School</h1>
+            <p id="heroSubtitle">Your learning destination</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="content">
+            <h2 id="aboutTitle">About This Website</h2>
+            <p id="createdByText">This website is created by <strong>Ivaylo Terziev</strong></p>
+            <p style="margin-top: 1.5rem;" id="descText">Welcome to @School@ - A comprehensive School Management System</p>
+            <div style="display:flex; gap:8px; margin-top:1rem;">
+                <a href="login.html" class="btn-access" id="accessBtnText">Access Management System</a>
+                <a href = "setup.html" class = "bin sign-school-btn" id ="signBtnText">Sign the School</a>
+            </div>
+            <!-- Quick dev logins for testing teacher/admin/student flows -->
+            <div id="devQuickLogin" style="margin-top:12px;">
+                <small style="color:#444; display:block; margin-bottom:6px;">Quick login (dev):</small>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-primary" onclick="quickLogin('Teacher')">Login as Teacher</button>
+                    <button class="btn-primary" onclick="quickLogin('Administrator')">Login as Admin</button>
+                    <button class="btn-primary" onclick="quickLogin('Student')">Login as Student</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+</body>
+</html>
+
+<script>
+    // Update UI text based on language
+    function updatePageText() {
+        document.getElementById('navHome').textContent = t('home');
+        document.getElementById('navManagement').textContent = t('managementSystem');
+        document.getElementById('navContact').textContent = t('contact');
+        document.getElementById('heroTitle').textContent = t('welcomeToShkolo');
+        document.getElementById('heroSubtitle').textContent = t('yourLearningDestination');
+        document.getElementById('aboutTitle').textContent = t('aboutThisWebsite');
+        document.getElementById('createdByText').innerHTML = t('createdBy');
+        document.getElementById('descText').innerHTML = t('comprehensiveSchoolManagement');
+        document.getElementById('accessBtnText').textContent = t('accessManagementSystem');
+        document.getElementById('signBtnText').textContent = t('signSchool');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set language selector and update text
+        const lang = getCurrentLanguage();
+        document.getElementById('langSelect').value = lang;
+        updatePageText();
+
+        const btn = document.getElementById('signSchoolIndexBtn');
+        btn && btn.addEventListener('click', function() {
+            // Ensure setup and login
+            if (localStorage.getItem('setupComplete') !== 'true') {
+                window.location.href = 'setup.html';
+                return;
+            }
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (localStorage.getItem('userRole') !== 'Administrator') {
+                alert('Only Administrators can sign the school.');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            if (!confirm('Sign this school? This will mark the school as officially signed.')) return;
+
+            const currentUser = localStorage.getItem('username') || '';
+            let signer = currentUser || prompt('Enter your name to sign the school:');
+            if (!signer) { alert('Signing cancelled'); return; }
+
+            const school = JSON.parse(localStorage.getItem('school') || '{}');
+            school.signed = true;
+            school.signedBy = signer;
+            school.signedDate = new Date().toLocaleString();
+            localStorage.setItem('school', JSON.stringify(school));
+
+            alert('School signed by ' + signer);
+            window.location.href = 'school-settings.html';
+        });
+
+        // Quick test/dev login helper - sets localStorage and redirects to appropriate page
+        window.quickLogin = function(role) {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', role + ' Test');
+            localStorage.setItem('userRole', role);
+            alert('Quick login as ' + role + ' — redirecting...');
+            if (role === 'Teacher') return window.location.href = 'teacher-classes.html';
+            if (role === 'Administrator') return window.location.href = 'classes.html';
+            if (role === 'Student') return window.location.href = 'student-classes.html';
+            window.location.href = 'dashboard.html';
+        };
+    });
+</script>

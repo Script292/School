@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Debug</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+    <style>
+        body { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 20px; }
+        .debug-section { background: #252526; padding: 12px; margin: 8px 0; border-radius: 4px; border-left: 4px solid #667eea; }
+        .debug-section h3 { color: #4ec9b0; margin-top: 0; }
+        .debug-item { margin: 4px 0; padding: 4px; background: #1e1e1e; border-radius: 2px; }
+        .debug-label { color: #9cdcfe; font-weight: bold; }
+        .debug-value { color: #ce9178; margin-left: 8px; }
+        .debug-error { color: #f48771; }
+        .debug-success { color: #6a9955; }
+        .btn-test { padding: 8px 12px; margin: 4px; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        .btn-test:hover { background: #5568d3; }
+        table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+        th { background: #2d2d30; color: #4ec9b0; }
+        td { background: #252526; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Shkolo Debug Console</h1>
+    
+    <div class="debug-section">
+        <h3>📋 Quick Actions</h3>
+        <button class="btn-test" onclick="quickLoginTeacher()">Quick Login Teacher</button>
+        <button class="btn-test" onclick="quickLoginAdmin()">Quick Login Admin</button>
+        <button class="btn-test" onclick="quickLoginStudent()">Quick Login Student</button>
+        <button class="btn-test" onclick="resetLocalStorage()">Clear All localStorage</button>
+        <button class="btn-test" onclick="location.reload()">Refresh Page</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>🗂️ LocalStorage Status</h3>
+        <div id="localStorageStatus"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>👥 Sample Data Generator</h3>
+        <button class="btn-test" onclick="generateSampleStudents()">Generate Sample Students</button>
+        <button class="btn-test" onclick="generateSampleExams()">Generate Sample Exams</button>
+        <button class="btn-test" onclick="generateSampleGrades()">Generate Sample Grades</button>
+        <button class="btn-test" onclick="generateAllSampleData()">Generate All Sample Data</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>📊 Exams List</h3>
+        <div id="examsStatus"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>📚 Homeworks List</h3>
+        <div id="homeworksStatus"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>⭐ Exam Grades List</h3>
+        <div id="gradesStatus"></div>
+    </div>
+
+    <div class="debug-section">
+        <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBNFfft59LimlxlWBiNQRBSrk3yJ5GlN1E",
+    authDomain: "school-321fe.firebaseapp.com",
+    projectId: "school-321fe",
+    storageBucket: "school-321fe.firebasestorage.app",
+    messagingSenderId: "786018044092",
+    appId: "1:786018044092:web:ca0c6e04c453f3443568b9",
+    measurementId: "G-BNS9V8TBFS"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+    </div>
+
+    <div class="debug-section">
+        <h3>🐛 Browser Console Errors (check F12 Console)</h3>
+        <button class="btn-test" onclick="testJavaScript()">Test JavaScript Execution</button>
+        <button class="btn-test" onclick="testGradeButtons()">Test Grade Button Functions</button>
+        <div id="jsTestResult"></div>
+    </div>
+
+    <script>
+        function updateAllStatus() {
+            updateLocalStorageStatus();
+            updateExamsStatus();
+            updateHomeworksStatus();
+            updateGradesStatus();
+            updateFirebaseStatus();
+        }
+
+        function updateLocalStorageStatus() {
+            const keys = ['isLoggedIn', 'username', 'userRole', 'setupComplete', 'exams', 'homeworks', 'examGrades', 'homeworkGrades', 'students'];
+            let html = '<table><tr><th>Key</th><th>Value/Length</th><th>Type</th></tr>';
+            keys.forEach(key => {
+                const val = localStorage.getItem(key);
+                const display = val ? (val.length > 100 ? val.substring(0, 100) + '...' : val) : 'null';
+                let className = 'debug-success';
+                if (!val || val === 'null') className = 'debug-error';
+                html += `<tr><td><span class="debug-label">${key}</span></td><td><span class="${className}">${display}</span></td><td>${typeof val}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('localStorageStatus').innerHTML = html;
+        }
+
+        function updateExamsStatus() {
+            const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+            let html = `<div class="debug-item"><span class="debug-label">Total Exams:</span><span class="debug-success">${exams.length}</span></div>`;
+            if (exams.length > 0) {
+                html += '<table><tr><th>ID</th><th>Name</th><th>Class</th><th>Created By</th></tr>';
+                exams.slice(0, 5).forEach(e => {
+                    html += `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.className}-${e.section}</td><td>${e.createdBy}</td></tr>`;
+                });
+                if (exams.length > 5) html += `<tr><td colspan="4">... and ${exams.length - 5} more</td></tr>`;
+                html += '</table>';
+            } else {
+                html += '<p class="debug-error">No exams found. Create sample data first.</p>';
+            }
+            document.getElementById('examsStatus').innerHTML = html;
+        }
+
+        function updateHomeworksStatus() {
+            const homeworks = JSON.parse(localStorage.getItem('homeworks') || '[]');
+            let html = `<div class="debug-item"><span class="debug-label">Total Homeworks:</span><span class="debug-success">${homeworks.length}</span></div>`;
+            if (homeworks.length > 0) {
+                html += '<table><tr><th>ID</th><th>Title</th><th>Class</th><th>Created By</th></tr>';
+                homeworks.slice(0, 5).forEach(h => {
+                    html += `<tr><td>${h.id}</td><td>${h.title}</td><td>${h.className}-${h.section}</td><td>${h.createdBy}</td></tr>`;
+                });
+                if (homeworks.length > 5) html += `<tr><td colspan="4">... and ${homeworks.length - 5} more</td></tr>`;
+                html += '</table>';
+            } else {
+                html += '<p class="debug-error">No homeworks found. Create sample data first.</p>';
+            }
+            document.getElementById('homeworksStatus').innerHTML = html;
+        }
+
+        function updateGradesStatus() {
+            const grades = JSON.parse(localStorage.getItem('examGrades') || '[]');
+            let html = `<div class="debug-item"><span class="debug-label">Total Exam Grades:</span><span class="debug-success">${grades.length}</span></div>`;
+            if (grades.length > 0) {
+                html += '<table><tr><th>Student</th><th>Grade</th><th>Given By</th><th>Date</th></tr>';
+                grades.slice(0, 5).forEach(g => {
+                    html += `<tr><td>${g.student}</td><td>${g.grade}</td><td>${g.givenBy}</td><td>${new Date(g.assignedAt).toLocaleString()}</td></tr>`;
+                });
+                if (grades.length > 5) html += `<tr><td colspan="4">... and ${grades.length - 5} more</td></tr>`;
+                html += '</table>';
+            } else {
+                html += '<p class="debug-error">No grades found. Assign grades first.</p>';
+            }
+            document.getElementById('gradesStatus').innerHTML = html;
+        }
+
+        function updateFirebaseStatus() {
+            let html = '';
+            try {
+                if (window.firebase) {
+                    html += '<div class="debug-success debug-item">✓ Firebase SDK loaded</div>';
+                    if (window.database) {
+                        html += '<div class="debug-success debug-item">✓ Firebase Database initialized</div>';
+                    } else {
+                        html += '<div class="debug-error debug-item">✗ Firebase Database not initialized</div>';
+                    }
+                } else {
+                    html += '<div class="debug-error debug-item">✗ Firebase SDK not loaded</div>';
+                }
+            } catch (e) {
+                html += `<div class="debug-error debug-item">✗ Firebase Error: ${e.message}</div>`;
+            }
+            document.getElementById('firebaseStatus').innerHTML = html;
+        }
+
+        function generateSampleStudents() {
+            const students = [
+                { name: 'Иван Петров', email: 'ivan@school.com', class: 'Grade 9-A', rollNumber: '001' },
+                { name: 'Мария Стойкова', email: 'maria@school.com', class: 'Grade 9-A', rollNumber: '002' },
+                { name: 'Станислав Начев', email: 'stan@school.com', class: 'Grade 10-A', rollNumber: '101' },
+                { name: 'Петър Данев', email: 'petar@school.com', class: 'Grade 11-B', rollNumber: '201' }
+            ];
+            localStorage.setItem('students', JSON.stringify(students));
+            alert('Generated ' + students.length + ' sample students');
+            updateAllStatus();
+        }
+
+        function generateSampleExams() {
+            const exams = [
+                { id: 'exam_1', className: 'Grade 9', section: 'A', name: 'Mathematics Test 1', date: '2025-11-20', maxMarks: 100, description: 'Test on Algebra', createdAt: new Date().toISOString(), createdBy: 'Teacher Test' },
+                { id: 'exam_2', className: 'Grade 10', section: 'A', name: 'Physics Midterm', date: '2025-11-22', maxMarks: 50, description: 'Chapter 1-3', createdAt: new Date().toISOString(), createdBy: 'Teacher Test' }
+            ];
+            localStorage.setItem('exams', JSON.stringify(exams));
+            alert('Generated ' + exams.length + ' sample exams');
+            updateAllStatus();
+        }
+
+        function generateSampleGrades() {
+            const grades = [
+                { id: 'eg_1', examId: 'exam_1', student: 'Иван Петров', grade: 5, givenBy: 'Teacher Test', assignedAt: new Date().toISOString() },
+                { id: 'eg_2', examId: 'exam_1', student: 'Мария Стойкова', grade: 6, givenBy: 'Teacher Test', assignedAt: new Date().toISOString() }
+            ];
+            localStorage.setItem('examGrades', JSON.stringify(grades));
+            alert('Generated ' + grades.length + ' sample grades');
+            updateAllStatus();
+        }
+
+        function generateAllSampleData() {
+            generateSampleStudents();
+            generateSampleExams();
+            generateSampleGrades();
+        }
+
+        function resetLocalStorage() {
+            if (confirm('Delete ALL localStorage data? This cannot be undone!')) {
+                localStorage.clear();
+                alert('localStorage cleared');
+                updateAllStatus();
+            }
+        }
+
+        function quickLoginTeacher() {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', 'Teacher Test');
+            localStorage.setItem('userRole', 'Teacher');
+            window.location.href = 'teacher-classes.html';
+        }
+
+        function quickLoginAdmin() {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', 'Admin Test');
+            localStorage.setItem('userRole', 'Administrator');
+            window.location.href = 'classes.html';
+        }
+
+        function quickLoginStudent() {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', 'Student Test');
+            localStorage.setItem('userRole', 'Student');
+            window.location.href = 'student-classes.html';
+        }
+
+        function testJavaScript() {
+            let result = '<div class="debug-item"><strong>JavaScript Test Results:</strong></div>';
+            try {
+                // Test basic functions
+                result += '<div class="debug-success debug-item">✓ Script execution working</div>';
+                result += '<div class="debug-item">localStorage API: ' + (typeof localStorage !== 'undefined' ? '<span class="debug-success">✓</span>' : '<span class="debug-error">✗</span>') + '</div>';
+                result += '<div class="debug-item">JSON API: ' + (typeof JSON !== 'undefined' ? '<span class="debug-success">✓</span>' : '<span class="debug-error">✗</span>') + '</div>';
+                result += '<div class="debug-item">DOM API: ' + (typeof document !== 'undefined' ? '<span class="debug-success">✓</span>' : '<span class="debug-error">✗</span>') + '</div>';
+                console.log('✓ JavaScript test passed');
+            } catch (e) {
+                result += '<div class="debug-error debug-item">✗ Error: ' + e.message + '</div>';
+                console.error('✗ JavaScript test failed:', e);
+            }
+            document.getElementById('jsTestResult').innerHTML = result;
+        }
+
+        function testGradeButtons() {
+            let result = '<div class="debug-item"><strong>Grade Button Function Tests:</strong></div>';
+            try {
+                // Test if functions exist
+                const functions = ['assignGrade', 'assignHomeworkGrade', 'openAssignModal', 'confirmAssignFromModal', 'closeAssignModal'];
+                functions.forEach(fn => {
+                    if (typeof window[fn] === 'function') {
+                        result += `<div class="debug-success debug-item">✓ ${fn} exists</div>`;
+                    } else {
+                        result += `<div class="debug-error debug-item">✗ ${fn} NOT FOUND</div>`;
+                    }
+                });
+                console.log('Grade button function test completed');
+            } catch (e) {
+                result += '<div class="debug-error debug-item">✗ Error: ' + e.message + '</div>';
+            }
+            document.getElementById('jsTestResult').innerHTML = result;
+        }
+
+        // Auto-update on page load and every 2 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAllStatus();
+            testJavaScript();
+            setInterval(updateAllStatus, 2000);
+        });
+    </script>
+</body>
+</html>

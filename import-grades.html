@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Import Grades</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+    <style>
+        body { background: #f5f5f5; }
+        .import-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .section { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .section h2 { color: #667eea; margin-top: 0; }
+        textarea { width: 100%; height: 250px; padding: 10px; font-family: monospace; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-success { background: #6aaf5f; color: white; }
+        .btn-success:hover { background: #5a9a4f; }
+        .btn-danger { background: #f44747; color: white; }
+        .result { padding: 15px; margin: 10px 0; border-radius: 4px; }
+        .result.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .result.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .result.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #667eea; color: white; }
+        .code-box { background: #f9f9f9; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace; font-size: 12px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="import-container">
+        <h1>📥 Import Grades & Students</h1>
+
+        <div class="section">
+            <h2>Step 1: Import Student Data</h2>
+            <p>Paste your student data below (with columns: Roll No., Student Name, Score, Grade)</p>
+            <textarea id="studentData" placeholder="Roll No.	Student Name	Score	Grade
+001	Ahmed Hassan	85	5
+002	Fatima Ahmed	92	6
+003	Mohamed Ali	78	4
+004	Sarah Johnson	88	5"></textarea>
+            <button class="btn btn-primary" onclick="parseAndImportStudents()">Parse & Import Students</button>
+            <div id="studentResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 2: Create Exam & Import Grades</h2>
+            <div style="margin: 10px 0;">
+                <label>Exam Name:</label>
+                <input type="text" id="examName" value="Test 1" style="width: 100%; padding: 8px; margin: 5px 0;">
+                
+                <label>Class Name:</label>
+                <input type="text" id="className" value="Grade 9" style="width: 100%; padding: 8px; margin: 5px 0;">
+                
+                <label>Section:</label>
+                <input type="text" id="section" value="A" style="width: 100%; padding: 8px; margin: 5px 0;">
+                
+                <label>Max Marks:</label>
+                <input type="number" id="maxMarks" value="100" style="width: 100%; padding: 8px; margin: 5px 0;">
+            </div>
+            <button class="btn btn-success" onclick="createExamAndImportGrades()">Create Exam & Import Grades</button>
+            <div id="examResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 3: Verify Data</h2>
+            <button class="btn btn-primary" onclick="verifyData()">Show All Data</button>
+            <div id="verifyResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>Quick Actions</h2>
+            <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+            <button class="btn btn-primary" onclick="testLogin('Teacher')">Login as Teacher</button>
+            <button class="btn btn-primary" onclick="testLogin('Administrator')">Login as Admin</button>
+            <div id="actionResult"></div>
+        </div>
+    </div>
+
+    <script>
+        function parseAndImportStudents() {
+            const textarea = document.getElementById('studentData');
+            const resultDiv = document.getElementById('studentResult');
+            
+            try {
+                const lines = textarea.value.trim().split('\n');
+                const students = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].split('\t').map(p => p.trim());
+                    if (parts.length >= 2) {
+                        students.push({
+                            rollNumber: parts[0],
+                            name: parts[1],
+                            email: `${parts[1].toLowerCase().replace(/\s+/g, '.')}@school.com`,
+                            class: 'Grade 9-A'
+                        });
+                    }
+                }
+                
+                localStorage.setItem('students', JSON.stringify(students));
+                
+                resultDiv.innerHTML = `<div class="result success">✓ Imported ${students.length} students<br><small>${students.map(s => s.rollNumber + ' - ' + s.name).join('<br>')}</small></div>`;
+                console.log('Students imported:', students);
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="result error">✗ Error: ${e.message}</div>`;
+            }
+        }
+
+        function createExamAndImportGrades() {
+            const resultDiv = document.getElementById('examResult');
+            
+            try {
+                const examName = document.getElementById('examName').value;
+                const className = document.getElementById('className').value;
+                const section = document.getElementById('section').value;
+                const maxMarks = document.getElementById('maxMarks').value;
+                
+                if (!examName || !className) {
+                    throw new Error('Exam name and class name are required');
+                }
+                
+                // Create exam
+                const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+                const examId = 'exam_' + Date.now();
+                const exam = {
+                    id: examId,
+                    className: className,
+                    section: section,
+                    name: examName,
+                    date: new Date().toISOString().split('T')[0],
+                    maxMarks: parseInt(maxMarks),
+                    description: 'Imported exam',
+                    createdAt: new Date().toISOString(),
+                    createdBy: 'Importer'
+                };
+                exams.push(exam);
+                localStorage.setItem('exams', JSON.stringify(exams));
+                
+                // Parse grades from textarea
+                const textarea = document.getElementById('studentData');
+                const lines = textarea.value.trim().split('\n');
+                const grades = [];
+                let gradeCount = 0;
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].split('\t').map(p => p.trim());
+                    if (parts.length >= 4) {
+                        const rollNo = parts[0];
+                        const studentName = parts[1];
+                        const score = parseInt(parts[2]);
+                        const grade = parseInt(parts[3]);
+                        
+                        grades.push({
+                            id: 'eg_' + Date.now() + '_' + i,
+                            examId: examId,
+                            student: studentName,
+                            grade: grade,
+                            score: score,
+                            givenBy: 'Importer',
+                            assignedAt: new Date().toISOString()
+                        });
+                        gradeCount++;
+                    }
+                }
+                
+                const allGrades = JSON.parse(localStorage.getItem('examGrades') || '[]');
+                allGrades.push(...grades);
+                localStorage.setItem('examGrades', JSON.stringify(allGrades));
+                
+                resultDiv.innerHTML = `<div class="result success">
+                    ✓ Exam created: ${examName}<br>
+                    ✓ Grades imported: ${gradeCount}<br>
+                    <table>
+                        <tr><th>Exam ID</th><th>Class</th><th>Max Marks</th><th>Grades Imported</th></tr>
+                        <tr><td>${examId}</td><td>${className}-${section}</td><td>${maxMarks}</td><td>${gradeCount}</td></tr>
+                    </table>
+                </div>`;
+                
+                console.log('Exam created:', exam);
+                console.log('Grades imported:', grades);
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="result error">✗ Error: ${e.message}</div>`;
+            }
+        }
+
+        function verifyData() {
+            const resultDiv = document.getElementById('verifyResult');
+            
+            try {
+                const students = JSON.parse(localStorage.getItem('students') || '[]');
+                const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+                const grades = JSON.parse(localStorage.getItem('examGrades') || '[]');
+                
+                let html = '<div class="result info">';
+                html += `<strong>Students:</strong> ${students.length}<br>`;
+                if (students.length > 0) {
+                    html += '<table><tr><th>Roll No.</th><th>Name</th><th>Email</th><th>Class</th></tr>';
+                    students.forEach(s => {
+                        html += `<tr><td>${s.rollNumber}</td><td>${s.name}</td><td>${s.email}</td><td>${s.class}</td></tr>`;
+                    });
+                    html += '</table>';
+                }
+                
+                html += `<br><strong>Exams:</strong> ${exams.length}<br>`;
+                if (exams.length > 0) {
+                    html += '<table><tr><th>Name</th><th>Class</th><th>Date</th><th>Max Marks</th></tr>';
+                    exams.forEach(e => {
+                        html += `<tr><td>${e.name}</td><td>${e.className}-${e.section}</td><td>${e.date}</td><td>${e.maxMarks}</td></tr>`;
+                    });
+                    html += '</table>';
+                }
+                
+                html += `<br><strong>Grades:</strong> ${grades.length}<br>`;
+                if (grades.length > 0) {
+                    html += '<table><tr><th>Student</th><th>Grade</th><th>Score</th><th>Given By</th><th>Assigned</th></tr>';
+                    grades.forEach(g => {
+                        html += `<tr><td>${g.student}</td><td>${g.grade}</td><td>${g.score || 'N/A'}</td><td>${g.givenBy}</td><td>${new Date(g.assignedAt).toLocaleString()}</td></tr>`;
+                    });
+                    html += '</table>';
+                }
+                
+                html += '</div>';
+                resultDiv.innerHTML = html;
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="result error">✗ Error: ${e.message}</div>`;
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Delete ALL data? This cannot be undone!')) {
+                localStorage.clear();
+                document.getElementById('actionResult').innerHTML = '<div class="result success">✓ All data cleared</div>';
+            }
+        }
+
+        function testLogin(role) {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', role + ' Test');
+            localStorage.setItem('userRole', role);
+            
+            if (role === 'Teacher') {
+                window.location.href = 'teacher-classes.html';
+            } else if (role === 'Administrator') {
+                window.location.href = 'classes.html';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - My Attendance</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Student Portal</div>
+            <ul class="nav-menu">
+                <li><a href="student-dashboard.html">Dashboard</a></li>
+                <li><a href="student-classes.html">My Classes</a></li>
+                <li><a href="student-attendance.html">Attendance</a></li>
+                <li><a href="student-grades.html">Grades</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>My Attendance</h1>
+            <p>View your attendance records</p>
+        </div>
+
+        <!-- Attendance Summary -->
+        <section class="settings-card">
+            <h2>Attendance Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>Total Days</h4>
+                    <p class="summary-value">200</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Days Present</h4>
+                    <p class="summary-value">188</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Days Absent</h4>
+                    <p class="summary-value">12</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Attendance %</h4>
+                    <p class="summary-value">94%</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Class-wise Attendance -->
+        <section class="settings-card">
+            <h2>Class-wise Attendance</h2>
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Total Days</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Attendance %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Mathematics</td>
+                        <td>Mr. Ahmed Khan</td>
+                        <td>40</td>
+                        <td>38</td>
+                        <td>2</td>
+                        <td><span class="attendance-badge good">95%</span></td>
+                    </tr>
+                    <tr>
+                        <td>English</td>
+                        <td>Mrs. Fatima Ali</td>
+                        <td>40</td>
+                        <td>37</td>
+                        <td>3</td>
+                        <td><span class="attendance-badge good">92.5%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Science</td>
+                        <td>Dr. Hassan Ibrahim</td>
+                        <td>40</td>
+                        <td>39</td>
+                        <td>1</td>
+                        <td><span class="attendance-badge good">97.5%</span></td>
+                    </tr>
+                    <tr>
+                        <td>History</td>
+                        <td>Mr. John Smith</td>
+                        <td>40</td>
+                        <td>36</td>
+                        <td>4</td>
+                        <td><span class="attendance-badge warning">90%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Physical Education</td>
+                        <td>Coach Mike Davis</td>
+                        <td>40</td>
+                        <td>38</td>
+                        <td>2</td>
+                        <td><span class="attendance-badge good">95%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Attendance History -->
+        <section class="settings-card">
+            <h2>Recent Attendance Records</h2>
+            <div class="search-filter">
+                <select class="filter-select">
+                    <option value="">All Classes</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="English">English</option>
+                    <option value="Science">Science</option>
+                </select>
+                <input type="month" class="search-input" value="2025-11">
+            </div>
+
+            <table class="management-table" style="margin-top: 1rem;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-11-15</td>
+                        <td>Mathematics</td>
+                        <td><span class="status-present">✓ Present</span></td>
+                    </tr>
+                    <tr>
+                        <td>2025-11-14</td>
+                        <td>English</td>
+                        <td><span class="status-present">✓ Present</span></td>
+                    </tr>
+                    <tr>
+                        <td>2025-11-13</td>
+                        <td>Science</td>
+                        <td><span class="status-present">✓ Present</span></td>
+                    </tr>
+                    <tr>
+                        <td>2025-11-12</td>
+                        <td>Mathematics</td>
+                        <td><span class="status-absent">✗ Absent</span></td>
+                    </tr>
+                    <tr>
+                        <td>2025-11-11</td>
+                        <td>History</td>
+                        <td><span class="status-present">✓ Present</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userRole') !== 'Student') {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

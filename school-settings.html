@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Settings</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - School Management</div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="teachers.html">Teachers</a></li>
+                <li><a href="classes.html">Classes</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="import.html">Import</a></li>
+                <li><a href="school-settings.html" class="active">School</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>School Settings</h1>
+            <p>Manage your school information and registration code</p>
+        </div>
+
+        <!-- School Information Section -->
+        <section class="settings-card">
+            <h2>School Information</h2>
+            
+            <div class="school-details" id="schoolDetails">
+                <!-- Will be populated by JavaScript -->
+            </div>
+
+            <div style="margin-top: 1rem; display:flex; gap:8px;">
+                <button class="btn-primary" onclick="editSchool()">Edit School Info</button>
+                <button id="signSchoolBtn" class="btn-success" onclick="signSchool()">Sign School</button>
+            </div>
+        </section>
+
+        <!-- School Code Section -->
+        <section class="settings-card">
+            <h2>Registration Code</h2>
+            <p style="color: #666; margin-bottom: 1.5rem;">
+                Share this code with teachers and staff so they can register in your school.
+            </p>
+
+            <div class="school-code-section">
+                <div class="code-display">
+                    <label>Your School Code:</label>
+                    <div class="code-box">
+                        <span id="schoolCodeDisplay" class="code-text"></span>
+                        <button type="button" class="btn-copy" onclick="copySchoolCode()">📋 Copy</button>
+                    </div>
+                </div>
+
+                <div class="code-info">
+                    <p>✓ This code allows new users to register and join your school</p>
+                    <p>✓ Each user with this code will be associated with your school</p>
+                    <p>✓ You can generate a new code anytime (old code will become invalid)</p>
+                </div>
+
+                <button class="btn-danger" onclick="regenerateCode()" style="margin-top: 1rem;">🔄 Generate New Code</button>
+            </div>
+        </section>
+
+        <!-- Admin Users Section -->
+        <section class="settings-card">
+            <h2>Admin Users</h2>
+            <p style="color: #666; margin-bottom: 1.5rem;">
+                Users with administrator access in your school
+            </p>
+
+            <div style="margin-bottom: 1rem;">
+                <button class="btn-success" onclick="openAddAdminModal()">+ Add Administrator</button>
+            </div>
+
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Registered Date</th>
+                    </tr>
+                </thead>
+                <tbody id="adminList">
+                    <!-- Will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Registered Users Section -->
+        <section class="settings-card">
+            <h2>All Registered Users</h2>
+            <p style="color: #666; margin-bottom: 1.5rem;">
+                Total users registered in your school: <strong id="totalUsers">0</strong>
+            </p>
+
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Registered Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList">
+                    <!-- Will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Edit School Modal -->
+        <div id="editSchoolModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Edit School Information</h2>
+                    <button class="modal-close" onclick="closeEditSchool()">×</button>
+                </div>
+
+                <form class="management-form" id="editSchoolForm">
+                    <div class="form-group">
+                        <label for="editSchoolName">School Name</label>
+                        <input type="text" id="editSchoolName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editSchoolAddress">School Address</label>
+                        <input type="text" id="editSchoolAddress">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editSchoolPhone">School Phone</label>
+                        <input type="tel" id="editSchoolPhone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editSchoolEmail">School Email</label>
+                        <input type="email" id="editSchoolEmail">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-success">Save Changes</button>
+                        <button type="button" class="btn-cancel" onclick="closeEditSchool()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Admin Modal -->
+        <div id="addAdminModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add Administrator</h2>
+                    <button class="modal-close" onclick="closeAddAdmin()">×</button>
+                </div>
+
+                <form class="management-form" id="addAdminForm">
+                    <div class="form-row-reg">
+                        <div class="form-group">
+                            <label for="newAdminFirstName">First Name</label>
+                            <input type="text" id="newAdminFirstName" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="newAdminLastName">Last Name</label>
+                            <input type="text" id="newAdminLastName" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newAdminEmail">Email</label>
+                        <input type="email" id="newAdminEmail" required />
+                    </div>
+
+                    <div class="form-row-reg">
+                        <div class="form-group">
+                            <label for="newAdminUsername">Username</label>
+                            <input type="text" id="newAdminUsername" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="newAdminPassword">Password</label>
+                            <input type="password" id="newAdminPassword" required />
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-success">Create Admin</button>
+                        <button type="button" class="btn-cancel" onclick="closeAddAdmin()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Check login
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
+
+            // Check if user is admin
+            if (localStorage.getItem('userRole') !== 'Administrator') {
+                alert('You do not have permission to access this page');
+                window.location.href = 'dashboard.html';
+            }
+
+            loadSchoolInfo();
+            loadUsers();
+        });
+
+        function loadSchoolInfo() {
+            const school = JSON.parse(localStorage.getItem('school') || '{}');
+            
+            if (!school.name) {
+                return;
+            }
+
+            const html = `
+                <div class="detail-row">
+                    <label>School Name:</label>
+                    <span>${school.name}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Address:</label>
+                    <span>${school.address || 'Not provided'}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Phone:</label>
+                    <span>${school.phone || 'Not provided'}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Email:</label>
+                    <span>${school.email || 'Not provided'}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Created Date:</label>
+                    <span>${school.createdDate}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Signed:</label>
+                    <span>${school.signed ? `✓ Signed by ${school.signedBy} on ${school.signedDate}` : '<span style="color:#999;">Not signed</span>'}</span>
+                </div>
+            `;
+
+            document.getElementById('schoolDetails').innerHTML = html;
+            document.getElementById('schoolCodeDisplay').textContent = school.code;
+
+            // Populate edit form
+            document.getElementById('editSchoolName').value = school.name;
+            document.getElementById('editSchoolAddress').value = school.address || '';
+            document.getElementById('editSchoolPhone').value = school.phone || '';
+            document.getElementById('editSchoolEmail').value = school.email || '';
+
+            // Update sign button state
+            const signBtn = document.getElementById('signSchoolBtn');
+            if (signBtn) {
+                if (school.signed) {
+                    signBtn.disabled = true;
+                    signBtn.textContent = 'Signed';
+                } else {
+                    signBtn.disabled = false;
+                    signBtn.textContent = 'Sign School';
+                }
+            }
+        }
+
+        function loadUsers() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const schoolCode = localStorage.getItem('schoolCode');
+            
+            // Filter users for this school
+            const schoolUsers = users.filter(u => u.schoolCode === schoolCode);
+            const admins = schoolUsers.filter(u => u.userRole === 'Administrator');
+
+            document.getElementById('totalUsers').textContent = schoolUsers.length;
+
+            // Load admins
+            let adminHtml = '';
+            admins.forEach(admin => {
+                adminHtml += `
+                    <tr>
+                        <td>${admin.firstName} ${admin.lastName}</td>
+                        <td>${admin.username}</td>
+                        <td>${admin.email}</td>
+                        <td>${admin.registeredDate}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('adminList').innerHTML = adminHtml || '<tr><td colspan="4">No admin users</td></tr>';
+
+            // Load all users
+            let usersHtml = '';
+            schoolUsers.forEach(user => {
+                usersHtml += `
+                    <tr>
+                        <td>${user.firstName} ${user.lastName}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td>${user.userRole}</td>
+                        <td>${user.registeredDate}</td>
+                        <td>
+                            <button class="btn-delete" onclick="removeUser('${user.username}')">Remove</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('usersList').innerHTML = usersHtml || '<tr><td colspan="6">No users registered</td></tr>';
+        }
+
+        // Sign school - mark as signed by current user/admin
+        function signSchool() {
+            if (!confirm('Sign this school? This will mark the school as officially signed.')) return;
+            const currentUser = localStorage.getItem('username') || '';
+            let signer = currentUser;
+            if (!signer) {
+                signer = prompt('Enter your name to sign the school:');
+                if (!signer) { alert('Signing cancelled'); return; }
+            }
+
+            const school = JSON.parse(localStorage.getItem('school') || '{}');
+            school.signed = true;
+            school.signedBy = signer;
+            school.signedDate = new Date().toLocaleString();
+            localStorage.setItem('school', JSON.stringify(school));
+
+            alert('School signed by ' + signer);
+            loadSchoolInfo();
+        }
+
+        function editSchool() {
+            document.getElementById('editSchoolModal').style.display = 'block';
+        }
+
+        function closeEditSchool() {
+            document.getElementById('editSchoolModal').style.display = 'none';
+        }
+
+        document.getElementById('editSchoolForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const school = JSON.parse(localStorage.getItem('school') || '{}');
+            school.name = document.getElementById('editSchoolName').value;
+            school.address = document.getElementById('editSchoolAddress').value;
+            school.phone = document.getElementById('editSchoolPhone').value;
+            school.email = document.getElementById('editSchoolEmail').value;
+
+            localStorage.setItem('school', JSON.stringify(school));
+            alert('School information updated!');
+            closeEditSchool();
+            loadSchoolInfo();
+        });
+
+        function copySchoolCode() {
+            const code = document.getElementById('schoolCodeDisplay').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('School code copied to clipboard!');
+            });
+        }
+
+        function regenerateCode() {
+            if (confirm('Are you sure? Users will need the new code to register. Old code will become invalid.')) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let newCode = '';
+                for (let i = 0; i < 8; i++) {
+                    newCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+
+                const school = JSON.parse(localStorage.getItem('school') || '{}');
+                school.code = newCode;
+                localStorage.setItem('school', JSON.stringify(school));
+                localStorage.setItem('schoolCode', newCode);
+
+                alert('New code generated: ' + newCode);
+                loadSchoolInfo();
+            }
+        }
+
+        function removeUser(username) {
+            if (confirm('Are you sure you want to remove this user?')) {
+                let users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                users = users.filter(u => u.username !== username);
+                localStorage.setItem('registeredUsers', JSON.stringify(users));
+                alert('User removed');
+                loadUsers();
+            }
+        }
+
+        // Add Admin modal handlers
+        function openAddAdminModal() {
+            // only admins may open
+            if (localStorage.getItem('userRole') !== 'Administrator') {
+                alert('Only administrators can add new admin accounts.');
+                return;
+            }
+            document.getElementById('addAdminModal').style.display = 'block';
+        }
+
+        function closeAddAdmin() {
+            document.getElementById('addAdminModal').style.display = 'none';
+            document.getElementById('addAdminForm').reset();
+        }
+
+        document.getElementById('addAdminForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const firstName = document.getElementById('newAdminFirstName').value.trim();
+            const lastName = document.getElementById('newAdminLastName').value.trim();
+            const email = document.getElementById('newAdminEmail').value.trim();
+            const username = document.getElementById('newAdminUsername').value.trim();
+            const password = document.getElementById('newAdminPassword').value;
+
+            if (!firstName || !lastName || !email || !username || !password) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            // ensure username unique
+            if (users.some(u => u.username === username)) {
+                alert('Username already exists. Choose another username.');
+                return;
+            }
+
+            const schoolCode = localStorage.getItem('schoolCode') || (JSON.parse(localStorage.getItem('school') || '{}')).code || '';
+
+            const newAdmin = {
+                firstName,
+                lastName,
+                email,
+                phone: '',
+                userRole: 'Administrator',
+                username,
+                password,
+                schoolCode,
+                registeredDate: new Date().toLocaleString()
+            };
+
+            users.push(newAdmin);
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+
+            alert('Administrator account created: ' + username);
+            closeAddAdmin();
+            loadUsers();
+        });
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editSchoolModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

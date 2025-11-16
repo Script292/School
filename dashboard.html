@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - School Management</div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="teachers.html">Teachers</a></li>
+                <li><a href="classes.html">Classes</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="import.html">Import</a></li>
+                <li><a href="school-settings.html">School</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>School Management System</h1>
+            <p>Welcome to your school administration portal</p>
+            <!-- Quick Login Buttons -->
+            <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: center;">
+                <button class="btn-primary" onclick="quickLogin('Teacher')" style="padding: 8px 16px; font-size: 14px;">🔄 Login as Teacher</button>
+                <button class="btn-primary" onclick="quickLogin('Administrator')" style="padding: 8px 16px; font-size: 14px;">🔄 Login as Admin</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Total Students Card -->
+            <div class="dashboard-card">
+                <div class="card-icon students-icon">👥</div>
+                <div class="card-content">
+                    <h3>Total Students</h3>
+                    <p class="card-number">245</p>
+                    <a href="students.html" class="card-link">View All</a>
+                </div>
+            </div>
+
+            <!-- Total Teachers Card -->
+            <div class="dashboard-card">
+                <div class="card-icon teachers-icon">👨‍🏫</div>
+                <div class="card-content">
+                    <h3>Total Teachers</h3>
+                    <p class="card-number">32</p>
+                    <a href="teachers.html" class="card-link">View All</a>
+                </div>
+            </div>
+
+            <!-- Total Classes Card -->
+            <div class="dashboard-card">
+                <div class="card-icon classes-icon">🏫</div>
+                <div class="card-content">
+                    <h3>Total Classes</h3>
+                    <p class="card-number">12</p>
+                    <a href="classes.html" class="card-link">View All</a>
+                </div>
+            </div>
+
+            <!-- Attendance Rate Card -->
+            <div class="dashboard-card">
+                <div class="card-icon attendance-icon">📊</div>
+                <div class="card-content">
+                    <h3>Attendance Rate</h3>
+                    <p class="card-number">92%</p>
+                    <a href="attendance.html" class="card-link">Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="openModal('addStudent')">
+                    <span class="btn-icon">➕</span>
+                    <span class="btn-text">Add New Student</span>
+                </button>
+                <button class="action-btn" onclick="openModal('addTeacher')">
+                    <span class="btn-icon">➕</span>
+                    <span class="btn-text">Add New Teacher</span>
+                </button>
+                <button class="action-btn" onclick="openModal('addClass')">
+                    <span class="btn-icon">➕</span>
+                    <span class="btn-text">Add New Class</span>
+                </button>
+                <button class="action-btn" onclick="openModal('markAttendance')">
+                    <span class="btn-icon">✓</span>
+                    <span class="btn-text">Mark Attendance</span>
+                </button>
+                <!-- Admin only: Open Setup -->
+                <button id="openSetupBtn" class="action-btn" style="display:none;" onclick="openSetup()">
+                    <span class="btn-icon">⚙️</span>
+                    <span class="btn-text">Open Setup</span>
+                </button>
+                <!-- Admin only: Manage Timetable -->
+                <button id="adminTimetableBtn" class="action-btn" style="display:none;" onclick="openAdminTimetable()">
+                    <span class="btn-icon">📅</span>
+                    <span class="btn-text">Manage Timetable</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Recent Activities -->
+        <section class="recent-activities">
+            <h2>Recent Activities</h2>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon">📝</div>
+                    <div class="activity-content">
+                        <p class="activity-text">New student registered: John Smith</p>
+                        <p class="activity-time">2 hours ago</p>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">📝</div>
+                    <div class="activity-content">
+                        <p class="activity-text">Attendance marked for Class 10-A</p>
+                        <p class="activity-time">4 hours ago</p>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">👨‍🏫</div>
+                    <div class="activity-content">
+                        <p class="activity-text">New teacher added: Mrs. Johnson</p>
+                        <p class="activity-time">1 day ago</p>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">🏫</div>
+                    <div class="activity-content">
+                        <p class="activity-text">New class created: Grade 11-B</p>
+                        <p class="activity-time">2 days ago</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section class="statistics">
+            <h2>School Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h4>Gender Distribution</h4>
+                    <p>Male: 135 | Female: 110</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Class Distribution</h4>
+                    <p>Primary: 8 | Secondary: 4</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Teacher Subjects</h4>
+                    <p>Math: 4 | English: 4 | Science: 5</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Check login
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
+
+            // Route based on user role
+            const userRole = localStorage.getItem('userRole');
+            if (userRole === 'Teacher') {
+                window.location.href = 'teacher-dashboard.html';
+            } else if (userRole === 'Student') {
+                window.location.href = 'student-dashboard.html';
+            } else if (userRole !== 'Administrator') {
+                window.location.href = 'login.html';
+            }
+            // Show Open Setup button for Administrators
+            if (userRole === 'Administrator') {
+                const btn = document.getElementById('openSetupBtn');
+                if (btn) btn.style.display = 'inline-flex';
+                const timetableBtn = document.getElementById('adminTimetableBtn');
+                if (timetableBtn) timetableBtn.style.display = 'inline-flex';
+            }
+        });
+
+        function openSetup() {
+            // Navigate to setup in edit mode (setup.html handles admin edit mode)
+            window.location.href = 'setup.html';
+        }
+
+        function openAdminTimetable() {
+            // Navigate to admin timetable builder
+            window.location.href = 'admin-timetable.html';
+        }
+
+        function openModal(modalType) {
+            alert('Modal for ' + modalType + ' would open here');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+
+        function quickLogin(role) {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', role + ' Test');
+            localStorage.setItem('userRole', role);
+            if (role === 'Teacher') return window.location.href = 'teacher-classes.html';
+            if (role === 'Administrator') return window.location.href = 'classes.html';
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

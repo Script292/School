@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Attendance</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - School Management</div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="teachers.html">Teachers</a></li>
+                <li><a href="classes.html">Classes</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="import.html">Import</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>Attendance Management</h1>
+            <button class="btn-primary" onclick="openMarkAttendanceForm()">+ Mark Attendance</button>
+        </div>
+
+        <!-- Mark Attendance Form -->
+        <section class="form-section" id="markAttendanceForm" style="display: none;">
+            <h2>Mark Attendance</h2>
+            <form class="management-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="attendanceDate">Date</label>
+                        <input type="date" id="attendanceDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="attendanceClass">Class</label>
+                        <select id="attendanceClass" required onchange="loadStudents()">
+                            <option value="">Select Class</option>
+                            <option value="Grade 9-A">Grade 9-A</option>
+                            <option value="Grade 9-B">Grade 9-B</option>
+                            <option value="Grade 10-A">Grade 10-A</option>
+                            <option value="Grade 10-B">Grade 10-B</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="attendanceList" style="display: none;">
+                    <h3>Students</h3>
+                    <div class="attendance-checkboxes">
+                        <label><input type="checkbox"> Ahmed Hassan - Present</label>
+                        <label><input type="checkbox"> Fatima Ahmed - Present</label>
+                        <label><input type="checkbox"> Mohamed Ali - Present</label>
+                        <label><input type="checkbox"> Sarah Johnson - Present</label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-success">Submit Attendance</button>
+                    <button type="button" class="btn-cancel" onclick="closeMarkAttendanceForm()">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Attendance Filters -->
+        <section class="search-filter">
+            <input type="date" id="filterDate" placeholder="Select date..." class="search-input">
+            <select class="filter-select" id="filterAttendanceClass">
+                <option value="">All Classes</option>
+                <option value="Grade 9-A">Grade 9-A</option>
+                <option value="Grade 9-B">Grade 9-B</option>
+                <option value="Grade 10-A">Grade 10-A</option>
+                <option value="Grade 10-B">Grade 10-B</option>
+            </select>
+        </section>
+
+        <!-- Attendance Report -->
+        <section class="table-section">
+            <h2>Attendance Report</h2>
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Class</th>
+                        <th>Total Students</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Leave</th>
+                        <th>Attendance %</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>11/15/2025</td>
+                        <td>Grade 9-A</td>
+                        <td>38</td>
+                        <td>36</td>
+                        <td>2</td>
+                        <td>0</td>
+                        <td>94.7%</td>
+                        <td>
+                            <button class="btn-view">View</button>
+                            <button class="btn-edit">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>11/15/2025</td>
+                        <td>Grade 9-B</td>
+                        <td>35</td>
+                        <td>34</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>97.1%</td>
+                        <td>
+                            <button class="btn-view">View</button>
+                            <button class="btn-edit">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>11/15/2025</td>
+                        <td>Grade 10-A</td>
+                        <td>40</td>
+                        <td>38</td>
+                        <td>2</td>
+                        <td>0</td>
+                        <td>95%</td>
+                        <td>
+                            <button class="btn-view">View</button>
+                            <button class="btn-edit">Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>11/14/2025</td>
+                        <td>Grade 9-A</td>
+                        <td>38</td>
+                        <td>37</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>97.4%</td>
+                        <td>
+                            <button class="btn-view">View</button>
+                            <button class="btn-edit">Edit</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Student Attendance Summary -->
+        <section class="attendance-summary">
+            <h2>Student Attendance Summary</h2>
+            <div class="search-filter">
+                <input type="text" placeholder="Search by student name or roll number..." class="search-input">
+                <select class="filter-select">
+                    <option value="">All Classes</option>
+                    <option value="Grade 9-A">Grade 9-A</option>
+                    <option value="Grade 9-B">Grade 9-B</option>
+                </select>
+            </div>
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Roll No.</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Total Days</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Leave</th>
+                        <th>Attendance %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>001</td>
+                        <td>Ahmed Hassan</td>
+                        <td>Grade 9-A</td>
+                        <td>200</td>
+                        <td>190</td>
+                        <td>8</td>
+                        <td>2</td>
+                        <td>95%</td>
+                    </tr>
+                    <tr>
+                        <td>002</td>
+                        <td>Fatima Ahmed</td>
+                        <td>Grade 9-A</td>
+                        <td>200</td>
+                        <td>198</td>
+                        <td>2</td>
+                        <td>0</td>
+                        <td>99%</td>
+                    </tr>
+                    <tr>
+                        <td>003</td>
+                        <td>Mohamed Ali</td>
+                        <td>Grade 10-A</td>
+                        <td>200</td>
+                        <td>185</td>
+                        <td>12</td>
+                        <td>3</td>
+                        <td>92.5%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Check login
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
+               // Check if user is Administrator
+               if (localStorage.getItem('userRole') !== 'Administrator') {
+                   alert('Access denied. Only administrators can access this page.');
+                   window.location.href = 'dashboard.html';
+               }
+        });
+
+        function openMarkAttendanceForm() {
+            document.getElementById('markAttendanceForm').style.display = 'block';
+        }
+
+        function closeMarkAttendanceForm() {
+            document.getElementById('markAttendanceForm').style.display = 'none';
+        }
+
+        function loadStudents() {
+            document.getElementById('attendanceList').style.display = 'block';
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

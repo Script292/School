@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Excel Import</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - School Management</div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="teachers.html">Teachers</a></li>
+                <li><a href="classes.html">Classes</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="import.html" class="active">Import</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>Import Data from Excel</h1>
+            <p>Upload Excel files to import student, teacher, and class data</p>
+        </div>
+
+        <!-- Import Tabs -->
+        <div class="import-tabs">
+            <button class="tab-btn active" onclick="switchTab('students-import')">Import Students</button>
+            <button class="tab-btn" onclick="switchTab('teachers-import')">Import Teachers</button>
+            <button class="tab-btn" onclick="switchTab('classes-import')">Import Classes</button>
+        </div>
+
+        <!-- Students Import -->
+        <section class="import-section active-tab" id="students-import">
+            <div class="import-card">
+                <h2>Import Students</h2>
+                
+                <div class="import-instructions">
+                    <h3>📋 Excel Format Requirements:</h3>
+                    <table class="format-table">
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Roll No</td>
+                                <td>Number</td>
+                                <td>Unique identifier</td>
+                            </tr>
+                            <tr>
+                                <td>Name</td>
+                                <td>Text</td>
+                                <td>Student full name</td>
+                            </tr>
+                            <tr>
+                                <td>Email</td>
+                                <td>Email</td>
+                                <td>Student email address</td>
+                            </tr>
+                            <tr>
+                                <td>Phone</td>
+                                <td>Text</td>
+                                <td>Contact number</td>
+                            </tr>
+                            <tr>
+                                <td>Class</td>
+                                <td>Text</td>
+                                <td>e.g., Grade 9-A</td>
+                            </tr>
+                            <tr>
+                                <td>DOB</td>
+                                <td>Date</td>
+                                <td>Date of birth</td>
+                            </tr>
+                            <tr>
+                                <td>Gender</td>
+                                <td>Text</td>
+                                <td>Male/Female/Other</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="file-upload-section">
+                    <div class="file-input-wrapper">
+                        <input 
+                            type="file" 
+                            id="studentFile" 
+                            accept=".xlsx,.xls,.csv" 
+                            onchange="handleStudentImport(event)"
+                        >
+                        <label for="studentFile" class="file-label">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Click to select or drag file here</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="studentPreview" style="display: none;">
+                    <h3>Preview Data</h3>
+                    <table class="preview-table" id="studentPreviewTable"></table>
+                    <div class="import-actions">
+                        <button class="btn-success" onclick="importStudents()">✓ Import Data</button>
+                        <button class="btn-cancel" onclick="clearPreview('student')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Teachers Import -->
+        <section class="import-section" id="teachers-import">
+            <div class="import-card">
+                <h2>Import Teachers</h2>
+                
+                <div class="import-instructions">
+                    <h3>📋 Excel Format Requirements:</h3>
+                    <table class="format-table">
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ID</td>
+                                <td>Text</td>
+                                <td>Unique teacher ID</td>
+                            </tr>
+                            <tr>
+                                <td>Name</td>
+                                <td>Text</td>
+                                <td>Teacher full name</td>
+                            </tr>
+                            <tr>
+                                <td>Email</td>
+                                <td>Email</td>
+                                <td>Teacher email</td>
+                            </tr>
+                            <tr>
+                                <td>Phone</td>
+                                <td>Text</td>
+                                <td>Contact number</td>
+                            </tr>
+                            <tr>
+                                <td>Subject</td>
+                                <td>Text</td>
+                                <td>e.g., Mathematics</td>
+                            </tr>
+                            <tr>
+                                <td>Qualification</td>
+                                <td>Text</td>
+                                <td>e.g., M.Sc</td>
+                            </tr>
+                            <tr>
+                                <td>Gender</td>
+                                <td>Text</td>
+                                <td>Male/Female/Other</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="file-upload-section">
+                    <div class="file-input-wrapper">
+                        <input 
+                            type="file" 
+                            id="teacherFile" 
+                            accept=".xlsx,.xls,.csv" 
+                            onchange="handleTeacherImport(event)"
+                        >
+                        <label for="teacherFile" class="file-label">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Click to select or drag file here</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="teacherPreview" style="display: none;">
+                    <h3>Preview Data</h3>
+                    <table class="preview-table" id="teacherPreviewTable"></table>
+                    <div class="import-actions">
+                        <button class="btn-success" onclick="importTeachers()">✓ Import Data</button>
+                        <button class="btn-cancel" onclick="clearPreview('teacher')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Classes Import -->
+        <section class="import-section" id="classes-import">
+            <div class="import-card">
+                <h2>Import Classes</h2>
+                
+                <div class="import-instructions">
+                    <h3>📋 Excel Format Requirements:</h3>
+                    <table class="format-table">
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Class Name</td>
+                                <td>Text</td>
+                                <td>e.g., Grade 9</td>
+                            </tr>
+                            <tr>
+                                <td>Section</td>
+                                <td>Text</td>
+                                <td>A, B, C</td>
+                            </tr>
+                            <tr>
+                                <td>Class Teacher</td>
+                                <td>Text</td>
+                                <td>Teacher name</td>
+                            </tr>
+                            <tr>
+                                <td>Students</td>
+                                <td>Number</td>
+                                <td>Number of students</td>
+                            </tr>
+                            <tr>
+                                <td>Capacity</td>
+                                <td>Number</td>
+                                <td>Max capacity</td>
+                            </tr>
+                            <tr>
+                                <td>Room</td>
+                                <td>Text</td>
+                                <td>Room number</td>
+                            </tr>
+                            <tr>
+                                <td>Schedule</td>
+                                <td>Text</td>
+                                <td>Time schedule</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="file-upload-section">
+                    <div class="file-input-wrapper">
+                        <input 
+                            type="file" 
+                            id="classFile" 
+                            accept=".xlsx,.xls,.csv" 
+                            onchange="handleClassImport(event)"
+                        >
+                        <label for="classFile" class="file-label">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Click to select or drag file here</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="classPreview" style="display: none;">
+                    <h3>Preview Data</h3>
+                    <table class="preview-table" id="classPreviewTable"></table>
+                    <div class="import-actions">
+                        <button class="btn-success" onclick="importClasses()">✓ Import Data</button>
+                        <button class="btn-cancel" onclick="clearPreview('class')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Import History -->
+        <section class="import-history">
+            <h2>Import History</h2>
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Import Date</th>
+                        <th>Type</th>
+                        <th>Records</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="importHistoryTable">
+                    <tr>
+                        <td>2025-11-15 10:30</td>
+                        <td>Students</td>
+                        <td>25</td>
+                        <td><span class="status-success">✓ Success</span></td>
+                    </tr>
+                    <tr>
+                        <td>2025-11-14 14:15</td>
+                        <td>Teachers</td>
+                        <td>8</td>
+                        <td><span class="status-success">✓ Success</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Check login
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
+            // Only administrators can access the import tool
+            if (localStorage.getItem('userRole') !== 'Administrator') {
+                alert('Access denied. Only administrators can import data.');
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.import-section').forEach(tab => {
+                tab.classList.remove('active-tab');
+            });
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active-tab');
+            event.target.classList.add('active');
+        }
+
+        function handleStudentImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                displayStudentPreview(jsonData);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function handleTeacherImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                displayTeacherPreview(jsonData);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function handleClassImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                displayClassPreview(jsonData);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function displayStudentPreview(data) {
+            const preview = data.slice(0, 5);
+            let html = '<tr><th>' + Object.keys(preview[0]).join('</th><th>') + '</th></tr>';
+            preview.forEach(row => {
+                html += '<tr><td>' + Object.values(row).join('</td><td>') + '</td></tr>';
+            });
+            
+            document.getElementById('studentPreviewTable').innerHTML = html;
+            document.getElementById('studentPreview').style.display = 'block';
+            
+            // Store for import
+            window.studentData = data;
+        }
+
+        function displayTeacherPreview(data) {
+            const preview = data.slice(0, 5);
+            let html = '<tr><th>' + Object.keys(preview[0]).join('</th><th>') + '</th></tr>';
+            preview.forEach(row => {
+                html += '<tr><td>' + Object.values(row).join('</td><td>') + '</td></tr>';
+            });
+            
+            document.getElementById('teacherPreviewTable').innerHTML = html;
+            document.getElementById('teacherPreview').style.display = 'block';
+            
+            // Store for import
+            window.teacherData = data;
+        }
+
+        function displayClassPreview(data) {
+            const preview = data.slice(0, 5);
+            let html = '<tr><th>' + Object.keys(preview[0]).join('</th><th>') + '</th></tr>';
+            preview.forEach(row => {
+                html += '<tr><td>' + Object.values(row).join('</td><td>') + '</td></tr>';
+            });
+            
+            document.getElementById('classPreviewTable').innerHTML = html;
+            document.getElementById('classPreview').style.display = 'block';
+            
+            // Store for import
+            window.classData = data;
+        }
+
+        function importStudents() {
+            if (window.studentData) {
+                localStorage.setItem('studentsData', JSON.stringify(window.studentData));
+                alert('Successfully imported ' + window.studentData.length + ' students!');
+                addImportHistory('Students', window.studentData.length);
+                clearPreview('student');
+            }
+        }
+
+        function importTeachers() {
+            if (window.teacherData) {
+                localStorage.setItem('teachersData', JSON.stringify(window.teacherData));
+                alert('Successfully imported ' + window.teacherData.length + ' teachers!');
+                addImportHistory('Teachers', window.teacherData.length);
+                clearPreview('teacher');
+            }
+        }
+
+        function importClasses() {
+            if (window.classData) {
+                localStorage.setItem('classesData', JSON.stringify(window.classData));
+                alert('Successfully imported ' + window.classData.length + ' classes!');
+                addImportHistory('Classes', window.classData.length);
+                clearPreview('class');
+            }
+        }
+
+        function clearPreview(type) {
+            if (type === 'student') {
+                document.getElementById('studentPreview').style.display = 'none';
+                document.getElementById('studentFile').value = '';
+                window.studentData = null;
+            } else if (type === 'teacher') {
+                document.getElementById('teacherPreview').style.display = 'none';
+                document.getElementById('teacherFile').value = '';
+                window.teacherData = null;
+            } else if (type === 'class') {
+                document.getElementById('classPreview').style.display = 'none';
+                document.getElementById('classFile').value = '';
+                window.classData = null;
+            }
+        }
+
+        function addImportHistory(type, count) {
+            const date = new Date().toLocaleString();
+            const row = `<tr>
+                <td>${date}</td>
+                <td>${type}</td>
+                <td>${count}</td>
+                <td><span class="status-success">✓ Success</span></td>
+            </tr>`;
+            document.getElementById('importHistoryTable').insertAdjacentHTML('afterbegin', row);
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

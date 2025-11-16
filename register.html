@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Register</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>Shkolo</h1>
+                <p>School Management System</p>
+            </div>
+
+            <form class="login-form" id="registerForm">
+                <h2 style="text-align: center; color: #667eea; margin-bottom: 1.5rem;">Create Account</h2>
+
+                <div class="form-group">
+                    <label for="schoolCode">School Code *</label>
+                    <input 
+                        type="text" 
+                        id="schoolCode" 
+                        name="schoolCode" 
+                        placeholder="Enter your school code" 
+                        required
+                    >
+                    <small style="color: #999; margin-top: 0.3rem; display: block;">
+                        Get this code from your school administrator
+                    </small>
+                </div>
+
+                <div class="form-row-reg">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input 
+                            type="text" 
+                            id="firstName" 
+                            name="firstName" 
+                            placeholder="Enter first name" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input 
+                            type="text" 
+                            id="lastName" 
+                            name="lastName" 
+                            placeholder="Enter last name" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="Enter your email" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input 
+                        type="tel" 
+                        id="phone" 
+                        name="phone" 
+                        placeholder="Enter phone number" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="userRole">User Role</label>
+                    <select id="userRole" name="userRole" required>
+                        <option value="">Select Role</option>
+                        <option value="Administrator">Administrator</option>
+                        <option value="Teacher">Teacher</option>
+                        <option value="Parent">Parent</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="registrationUsername">Username</label>
+                    <input 
+                        type="text" 
+                        id="registrationUsername" 
+                        name="registrationUsername" 
+                        placeholder="Choose a username" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="registrationPassword">Password</label>
+                    <input 
+                        type="password" 
+                        id="registrationPassword" 
+                        name="registrationPassword" 
+                        placeholder="Create a strong password" 
+                        required
+                    >
+                    <small style="color: #999; margin-top: 0.3rem; display: block;">
+                        Password must be at least 6 characters
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        placeholder="Confirm password" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input type="checkbox" name="terms" required> 
+                        I agree to the <a href="#">Terms and Conditions</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="login-btn">Create Account</button>
+
+                <div style="text-align: center; margin-top: 1.5rem; color: #666;">
+                    Already have an account? <a href="login.html" style="color: #667eea; font-weight: 600;">Login here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const schoolCode = document.getElementById('schoolCode').value.trim().toUpperCase();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const userRole = document.getElementById('userRole').value;
+            const username = document.getElementById('registrationUsername').value.trim();
+            const password = document.getElementById('registrationPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const terms = document.querySelector('input[name="terms"]').checked;
+
+            try {
+                // Validate school code from Firebase
+                const schoolJson = await storageDB.getItem('school');
+                const school = JSON.parse(schoolJson || '{}');
+                
+                if (!school.code || schoolCode !== school.code) {
+                    alert('Invalid school code. Please enter the correct code from your administrator.');
+                    return;
+                }
+
+                // Validation
+                if (!firstName || !lastName) {
+                    alert('Please enter first and last name');
+                    return;
+                }
+
+                if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                    alert('Please enter a valid email address');
+                    return;
+                }
+
+                if (!phone.match(/^[\d\+\-\s\(\)]+$/)) {
+                    alert('Please enter a valid phone number');
+                    return;
+                }
+
+                if (!userRole) {
+                    alert('Please select a user role');
+                    return;
+                }
+
+                if (username.length < 3) {
+                    alert('Username must be at least 3 characters');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    alert('Password must be at least 6 characters');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match');
+                    return;
+                }
+
+                if (!terms) {
+                    alert('Please agree to the terms and conditions');
+                    return;
+                }
+
+                // Get users from Firebase
+                const usersJson = await storageDB.getItem('registeredUsers');
+                const users = JSON.parse(usersJson || '[]');
+                
+                // Check if username already exists
+                if (users.some(user => user.username === username)) {
+                    alert('Username already exists. Please choose a different username.');
+                    return;
+                }
+
+                // Create user object
+                const newUser = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    phone: phone,
+                    userRole: userRole,
+                    username: username,
+                    password: password,
+                    schoolCode: schoolCode,
+                    registeredDate: new Date().toISOString(),
+                    userId: 'user_' + Date.now()
+                };
+
+                // Save user to Firebase
+                users.push(newUser);
+                await storageDB.setItem('registeredUsers', JSON.stringify(users));
+
+                // Log registration to Firebase
+                const registrationLog = JSON.parse(await storageDB.getItem('registrationLog') || '[]');
+                registrationLog.push({
+                    username: username,
+                    userRole: userRole,
+                    email: email,
+                    registrationTime: new Date().toISOString()
+                });
+                await storageDB.setItem('registrationLog', JSON.stringify(registrationLog));
+
+                alert('Registration successful! You can now login with your username and password.');
+                window.location.href = 'login.html';
+            } catch (e) {
+                console.error('Registration error:', e);
+                alert('Error during registration: ' + e.message + '\nTrying fallback method...');
+                
+                // Fallback to localStorage if Firebase fails
+                const school = JSON.parse(localStorage.getItem('school') || '{}');
+                if (!school.code || schoolCode !== school.code) {
+                    alert('Invalid school code.');
+                    return;
+                }
+
+                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                if (users.some(user => user.username === username)) {
+                    alert('Username already exists.');
+                    return;
+                }
+
+                const newUser = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    phone: phone,
+                    userRole: userRole,
+                    username: username,
+                    password: password,
+                    schoolCode: schoolCode,
+                    registeredDate: new Date().toLocaleString()
+                };
+
+                users.push(newUser);
+                localStorage.setItem('registeredUsers', JSON.stringify(users));
+                alert('Registration successful! (Fallback mode)');
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School - System Status</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .status-ok { color: green; font-weight: bold; }
+        .status-error { color: red; font-weight: bold; }
+        .section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Shkolo System Status Check</h1>
+    
+    <div class="section">
+        <h2>File Access Check</h2>
+        <div id="fileStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Browser Capabilities</h2>
+        <div id="browserStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>localStorage Test</h2>
+        <button onclick="testLocalStorage()">Test localStorage</button>
+        <div id="storageStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Quick Navigation</h2>
+        <button onclick="window.location.href='index.html'">Go to Home</button>
+        <button onclick="quickLogin('Teacher')">Login as Teacher</button>
+        <button onclick="quickLogin('Administrator')">Login as Admin</button>
+        <button onclick="quickLogin('Student')">Login as Student</button>
+    </div>
+
+    <script>
+        function testLocalStorage() {
+            try {
+                localStorage.setItem('test', 'value');
+                const val = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                document.getElementById('storageStatus').innerHTML = '<span class="status-ok">✓ localStorage works</span>';
+            } catch (e) {
+                document.getElementById('storageStatus').innerHTML = '<span class="status-error">✗ localStorage error: ' + e.message + '</span>';
+            }
+        }
+
+        function quickLogin(role) {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', role + ' Test');
+            localStorage.setItem('userRole', role);
+            if (role === 'Teacher') return window.location.href = 'teacher-classes.html';
+            if (role === 'Administrator') return window.location.href = 'classes.html';
+            if (role === 'Student') return window.location.href = 'student-classes.html';
+            window.location.href = 'dashboard.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let html = '';
+            
+            // Check browser capabilities
+            let browserOk = true;
+            if (typeof localStorage === 'undefined') {
+                html += '<span class="status-error">✗ localStorage not available</span><br>';
+                browserOk = false;
+            } else {
+                html += '<span class="status-ok">✓ localStorage available</span><br>';
+            }
+            
+            if (typeof JSON === 'undefined') {
+                html += '<span class="status-error">✗ JSON not available</span><br>';
+                browserOk = false;
+            } else {
+                html += '<span class="status-ok">✓ JSON available</span><br>';
+            }
+            
+            if (typeof document === 'undefined') {
+                html += '<span class="status-error">✗ DOM not available</span><br>';
+                browserOk = false;
+            } else {
+                html += '<span class="status-ok">✓ DOM available</span><br>';
+            }
+            
+            if (browserOk) {
+                html += '<span class="status-ok">✓ All browser capabilities OK</span>';
+            }
+            
+            document.getElementById('browserStatus').innerHTML = html;
+            
+            // Check file access
+            let fileHtml = '<p>This page can be accessed. Other pages should be accessible too.</p>';
+            fileHtml += '<p>Try accessing these pages:</p>';
+            fileHtml += '<ul>';
+            fileHtml += '<li><a href="index.html">index.html</a></li>';
+            fileHtml += '<li><a href="teacher-classes.html">teacher-classes.html</a></li>';
+            fileHtml += '<li><a href="classes.html">classes.html</a></li>';
+            fileHtml += '<li><a href="login.html">login.html</a></li>';
+            fileHtml += '<li><a href="debug.html">debug.html (diagnostics)</a></li>';
+            fileHtml += '</ul>';
+            document.getElementById('fileStatus').innerHTML = fileHtml;
+        });
+    </script>
+</body>
+</html>

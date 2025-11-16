@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Student Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Student Portal</div>
+            <ul class="nav-menu">
+                <li><a href="student-dashboard.html">Dashboard</a></li>
+                <li><a href="student-classes.html">My Classes</a></li>
+                <li><a href="student-attendance.html">Attendance</a></li>
+                <li><a href="student-grades.html">Grades</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome, Student! 👨‍🎓</h1>
+            <p id="userGreeting"></p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- My Classes Card -->
+            <div class="dashboard-card">
+                <div class="card-icon classes-icon">📚</div>
+                <div class="card-content">
+                    <h3>My Classes</h3>
+                    <p class="card-number" id="classesCount">0</p>
+                    <a href="student-classes.html" class="card-link">View All</a>
+                </div>
+            </div>
+
+            <!-- Attendance Card -->
+            <div class="dashboard-card">
+                <div class="card-icon attendance-icon">📊</div>
+                <div class="card-content">
+                    <h3>My Attendance</h3>
+                    <p class="card-number" id="attendancePercentage">--</p>
+                    <a href="student-attendance.html" class="card-link">View Details</a>
+                </div>
+            </div>
+
+            <!-- Grades Card -->
+            <div class="dashboard-card">
+                <div class="card-icon students-icon">📈</div>
+                <div class="card-content">
+                    <h3>Overall Grade</h3>
+                    <p class="card-number" id="overallGrade">--</p>
+                    <a href="student-grades.html" class="card-link">View Grades</a>
+                </div>
+            </div>
+
+            <!-- Performance Card -->
+            <div class="dashboard-card">
+                <div class="card-icon teachers-icon">🏆</div>
+                <div class="card-content">
+                    <h3>Performance</h3>
+                    <p class="card-number" id="performance">--</p>
+                    <a href="student-grades.html" class="card-link">Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Info -->
+        <section class="quick-actions">
+            <h2>Important Information</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>📅 Class Schedule</h3>
+                    <p>8:00 AM - 2:00 PM</p>
+                </div>
+                <div class="info-card">
+                    <h3>📚 Number of Classes</h3>
+                    <p id="totalClasses">0 Classes</p>
+                </div>
+                <div class="info-card">
+                    <h3>👨‍🏫 Class Teachers</h3>
+                    <p>Available in class details</p>
+                </div>
+                <div class="info-card">
+                    <h3>📞 Support</h3>
+                    <p><a href="contact.html">Contact Us</a></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Academic Summary -->
+        <section class="statistics">
+            <h2>Academic Summary</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h4>Total Classes</h4>
+                    <p id="academicClasses">5</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Attendance Rate</h4>
+                    <p id="attendanceRate">94%</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Average Score</h4>
+                    <p id="averageScore">82%</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Updates -->
+        <section class="recent-activities">
+            <h2>Recent Updates</h2>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon">📝</div>
+                    <div class="activity-content">
+                        <p class="activity-text">Mathematics Quiz Results Published</p>
+                        <p class="activity-time">Today at 3:00 PM</p>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">✓</div>
+                    <div class="activity-content">
+                        <p class="activity-text">Attendance marked for today</p>
+                        <p class="activity-time">Today at 9:00 AM</p>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">📧</div>
+                    <div class="activity-content">
+                        <p class="activity-text">Assignment due: English Essay</p>
+                        <p class="activity-time">Tomorrow</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check login and role
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
+
+            if (localStorage.getItem('userRole') !== 'Student') {
+                window.location.href = 'dashboard.html';
+            }
+
+            loadStudentData();
+        });
+
+        function loadStudentData() {
+            const username = localStorage.getItem('username');
+            const schoolCode = localStorage.getItem('schoolCode');
+
+            // Set greeting
+            document.getElementById('userGreeting').textContent = 'Welcome back! Check your grades and attendance below.';
+
+            // Mock data - in real app, fetch from server
+            document.getElementById('classesCount').textContent = '5';
+            document.getElementById('attendancePercentage').textContent = '94%';
+            document.getElementById('overallGrade').textContent = 'A-';
+            document.getElementById('performance').textContent = 'Good';
+
+            document.getElementById('totalClasses').textContent = '5 Classes';
+            document.getElementById('academicClasses').textContent = '5';
+            document.getElementById('attendanceRate').textContent = '94%';
+            document.getElementById('averageScore').textContent = '82%';
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

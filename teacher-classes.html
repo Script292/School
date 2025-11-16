@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - My Classes</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Teacher Portal</div>
+            <ul class="nav-menu">
+                <li><a href="teacher-dashboard.html">Dashboard</a></li>
+                <li><a href="teacher-classes.html">My Classes</a></li>
+                <li><a href="teacher-attendance.html">Mark Attendance</a></li>
+                <li><a href="teacher-grades.html">Grades</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div id="debugStatus" style="background:#fff8c4;padding:8px;border-radius:6px;margin-bottom:12px;display:none;">Debug: <span id="debugText"></span></div>
+        <div class="management-header">
+            <h1>My Classes</h1>
+            <p>Manage your classes and students</p>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                <button class="btn-primary" onclick="openAddExamForm()">+ Add Exam</button>
+                <button class="btn-primary" onclick="openAddHomeworkForm()">+ Add Homework</button>
+            </div>
+        </div>
+
+        <!-- Classes Grid -->
+        <section class="classes-grid">
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>Grade 9-A</h3>
+                    <span class="class-badge">Mathematics</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Students:</strong> 38</p>
+                    <p><strong>Time:</strong> 8:00 - 14:00</p>
+                    <p><strong>Room:</strong> 101</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Students</button>
+                    <button class="btn-edit">Manage</button>
+                    <button class="btn-primary" onclick="openAddExamForm('Grade 9','A')">+ Exam</button>
+                    <button class="btn-view" onclick="viewClassExams('Grade 9','A')">View Exams</button>
+                    <button class="btn-timetable" onclick="viewTimetable('9-A')">📅 View Timetable</button>
+                </div>
+            </div>
+
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>Grade 10-A</h3>
+                    <span class="class-badge">Mathematics</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Students:</strong> 40</p>
+                    <p><strong>Time:</strong> 9:00 AM - 10:00 AM</p>
+                    <p><strong>Room:</strong> 102</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Students</button>
+                    <button class="btn-edit">Manage</button>
+                    <button class="btn-primary" onclick="openAddExamForm('Grade 10','A')">+ Exam</button>
+                    <button class="btn-view" onclick="viewClassExams('Grade 10','A')">View Exams</button>
+                    <button class="btn-timetable" onclick="viewTimetable('10-A')">📅 View Timetable</button>
+                </div>
+            </div>
+
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>Grade 11-B</h3>
+                    <span class="class-badge">Mathematics</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Students:</strong> 35</p>
+                    <p><strong>Time:</strong> 11:00 AM - 12:00 PM</p>
+                    <p><strong>Room:</strong> 104</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Students</button>
+                    <button class="btn-edit">Manage</button>
+                    <button class="btn-primary" onclick="openAddExamForm('Grade 11','B')">+ Exam</button>
+                    <button class="btn-view" onclick="viewClassExams('Grade 11','B')">View Exams</button>
+                    <button class="btn-timetable" onclick="viewTimetable('11-B')">📅 View Timetable</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Exam Form -->
+        <section class="form-section" id="addExamForm" style="display:none; margin-top:16px;">
+            <h2>Add Exam</h2>
+            <form class="management-form" id="examForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="examClassName">Class Name</label>
+                        <input type="text" id="examClassName" placeholder="e.g., Grade 10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="examSection">Section</label>
+                        <input type="text" id="examSection" placeholder="e.g., A" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="examName">Exam Name</label>
+                        <input type="text" id="examName" placeholder="e.g., Midterm 1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="examDate">Date</label>
+                        <input type="date" id="examDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="examMaxMarks">Max Marks</label>
+                        <input type="number" id="examMaxMarks" placeholder="e.g., 100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="examDesc">Description</label>
+                        <input type="text" id="examDesc" placeholder="Optional notes">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-success">Save Exam</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddExamForm()">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Exams List (for viewing) -->
+        <section class="table-section" id="examsListSection" style="display:none; margin-top:16px;">
+            <h2>Exams</h2>
+            <table class="management-table" id="examsTable">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Section</th>
+                        <th>Exam Name</th>
+                        <th>Date</th>
+                        <th>Max Marks</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="examsTableBody">
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Add Homework Form -->
+        <section class="form-section" id="addHomeworkForm" style="display:none; margin-top:16px;">
+            <h2>Add Homework</h2>
+            <form class="management-form" id="homeworkForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hwClassName">Class Name</label>
+                        <input type="text" id="hwClassName" placeholder="e.g., Grade 10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hwSection">Section</label>
+                        <input type="text" id="hwSection" placeholder="e.g., A" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hwTitle">Title</label>
+                        <input type="text" id="hwTitle" placeholder="e.g., Chapter 5 Exercises" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hwDueDate">Due Date</label>
+                        <input type="date" id="hwDueDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hwPoints">Max Points</label>
+                        <input type="number" id="hwPoints" placeholder="e.g., 10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hwDesc">Description</label>
+                        <input type="text" id="hwDesc" placeholder="Optional notes">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-success">Save Homework</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddHomeworkForm()">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Homeworks List (for viewing) -->
+        <section class="table-section" id="homeworksListSection" style="display:none; margin-top:16px;">
+            <h2>Homeworks</h2>
+            <table class="management-table" id="homeworksTable">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Section</th>
+                        <th>Title</th>
+                        <th>Due</th>
+                        <th>Max Points</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="homeworksTableBody">
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Summary -->
+        <section class="settings-card">
+            <h2>Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>Total Classes</h4>
+                    <p class="summary-value">3</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Total Students</h4>
+                    <p class="summary-value">113</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Subject</h4>
+                    <p class="summary-value">Mathematics</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <!-- Grade modal -->
+    <div id="gradeModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 id="gradeModalTitle">Grades</h3>
+                <button class="btn-cancel" onclick="closeGradeModal()">Close</button>
+            </div>
+            <div id="gradeModalBody" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <!-- Assign grade modal (select student or manual) -->
+    <div id="assignGradeModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 id="assignModalTitle">Assign Grade</h3>
+                <button class="btn-cancel" onclick="closeAssignModal()">Close</button>
+            </div>
+            <div style="margin-top:12px;">
+                <label for="assignStudentSelect">Select student</label>
+                <select id="assignStudentSelect" style="width:100%; padding:8px; margin-top:6px;"></select>
+                <small style="display:block; margin:8px 0;">Or enter student name/ID:</small>
+                <input id="assignStudentManual" placeholder="Student name or ID" style="width:100%; padding:8px;" />
+                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+                    <button class="btn-success" onclick="confirmAssignFromModal()">Save Grade</button>
+                    <button class="btn-cancel" onclick="closeAssignModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userRole') !== 'Teacher') {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+
+        function viewTimetable(classId) {
+            window.location.href = 'view-timetable.html?class=' + encodeURIComponent(classId);
+        }
+
+        // show debug status for testing
+        (function showDebug() {
+            try {
+                const el = document.getElementById('debugStatus');
+                if (!el) return;
+                const t = document.getElementById('debugText');
+                const role = localStorage.getItem('userRole');
+                const user = localStorage.getItem('username');
+                const logged = localStorage.getItem('isLoggedIn');
+                t.textContent = `isLoggedIn=${logged} userRole=${role} username=${user}`;
+                el.style.display = 'block';
+            } catch (e) { console.warn('debug show failed', e); }
+        })();
+
+        // Exams functionality for teachers
+        function openAddExamForm(className, section) {
+            document.getElementById('addExamForm').style.display = 'block';
+            document.getElementById('examsListSection').style.display = 'none';
+            if (className) document.getElementById('examClassName').value = className;
+            if (section) document.getElementById('examSection').value = section;
+        }
+
+        function closeAddExamForm() {
+            document.getElementById('addExamForm').style.display = 'none';
+            document.getElementById('examForm').reset();
+        }
+
+        function viewClassExams(className, section) {
+            const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+            const filtered = exams.filter(e => e.className === className && e.section === section);
+            const tbody = document.getElementById('examsTableBody');
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No exams defined for this class.</td></tr>';
+            } else {
+                filtered.forEach(e => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${e.className}</td>
+                        <td>${e.section}</td>
+                        <td>${e.name}</td>
+                        <td>${e.date}</td>
+                        <td>${e.maxMarks}</td>
+                        <td>${e.description || ''}</td>
+                        <td>
+                          <button class="grade-btn grade-6" onclick="assignGrade('${e.id}',6)">6</button>
+                          <button class="grade-btn grade-5" onclick="assignGrade('${e.id}',5)">5</button>
+                          <button class="grade-btn grade-4" onclick="assignGrade('${e.id}',4)">4</button>
+                          <button class="grade-btn grade-3" onclick="assignGrade('${e.id}',3)">3</button>
+                          <button class="grade-btn grade-2" onclick="assignGrade('${e.id}',2)">2</button>
+                          <button class="btn-view" onclick="viewExamGrades('${e.id}')">View Grades</button>
+                          <button class="btn-delete" onclick="deleteExam('${e.id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            document.getElementById('examsListSection').style.display = 'block';
+            document.getElementById('addExamForm').style.display = 'none';
+        }
+
+        // Homework functions
+        function openAddHomeworkForm(className, section) {
+            document.getElementById('addHomeworkForm').style.display = 'block';
+            document.getElementById('homeworksListSection').style.display = 'none';
+            if (className) document.getElementById('hwClassName').value = className;
+            if (section) document.getElementById('hwSection').value = section;
+        }
+
+        function closeAddHomeworkForm() {
+            document.getElementById('addHomeworkForm').style.display = 'none';
+            document.getElementById('homeworkForm').reset();
+        }
+
+        function viewClassHomeworks(className, section) {
+            const homeworks = JSON.parse(localStorage.getItem('homeworks') || '[]');
+            const filtered = homeworks.filter(h => h.className === className && h.section === section);
+            const tbody = document.getElementById('homeworksTableBody');
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No homeworks defined for this class.</td></tr>';
+            } else {
+                filtered.forEach(h => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${h.className}</td>
+                        <td>${h.section}</td>
+                        <td>${h.title}</td>
+                        <td>${h.dueDate}</td>
+                        <td>${h.maxPoints}</td>
+                        <td>${h.description || ''}</td>
+                        <td>
+                          <button class="grade-btn grade-6" onclick="assignHomeworkGrade('${h.id}',6)">6</button>
+                          <button class="grade-btn grade-5" onclick="assignHomeworkGrade('${h.id}',5)">5</button>
+                          <button class="grade-btn grade-4" onclick="assignHomeworkGrade('${h.id}',4)">4</button>
+                          <button class="grade-btn grade-3" onclick="assignHomeworkGrade('${h.id}',3)">3</button>
+                          <button class="grade-btn grade-2" onclick="assignHomeworkGrade('${h.id}',2)">2</button>
+                          <button class="btn-view" onclick="viewHomeworkGrades('${h.id}')">View Grades</button>
+                          <button class="btn-delete" onclick="deleteHomework('${h.id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            document.getElementById('homeworksListSection').style.display = 'block';
+            document.getElementById('addHomeworkForm').style.display = 'none';
+        }
+
+        document.getElementById('homeworkForm') && document.getElementById('homeworkForm').addEventListener('submit', function(ev) {
+            ev.preventDefault();
+            saveHomework();
+        });
+
+        function saveHomework() {
+            const className = document.getElementById('hwClassName').value.trim();
+            const section = document.getElementById('hwSection').value.trim();
+            const title = document.getElementById('hwTitle').value.trim();
+            const dueDate = document.getElementById('hwDueDate').value;
+            const maxPoints = document.getElementById('hwPoints').value;
+            const description = document.getElementById('hwDesc').value.trim();
+
+            if (!className || !section || !title || !dueDate || !maxPoints) {
+                alert('Please fill required fields');
+                return;
+            }
+
+            const homeworks = JSON.parse(localStorage.getItem('homeworks') || '[]');
+            const hw = {
+                id: 'hw_' + Date.now(),
+                className,
+                section,
+                title,
+                dueDate,
+                maxPoints: Number(maxPoints),
+                description,
+                createdAt: new Date().toISOString(),
+                createdBy: localStorage.getItem('username') || 'unknown'
+            };
+            homeworks.push(hw);
+            localStorage.setItem('homeworks', JSON.stringify(homeworks));
+            alert('Homework saved');
+            closeAddHomeworkForm();
+        }
+
+        function deleteHomework(id) {
+            if (!confirm('Delete this homework?')) return;
+            let homeworks = JSON.parse(localStorage.getItem('homeworks') || '[]');
+            homeworks = homeworks.filter(h => h.id !== id);
+            localStorage.setItem('homeworks', JSON.stringify(homeworks));
+            const sectionVisible = document.getElementById('homeworksListSection').style.display !== 'none';
+            if (sectionVisible) {
+                const firstRow = document.querySelector('#homeworksTableBody tr');
+                if (firstRow) {
+                    const cls = firstRow.children[0].textContent;
+                    const sec = firstRow.children[1].textContent;
+                    viewClassHomeworks(cls, sec);
+                } else {
+                    document.getElementById('homeworksTableBody').innerHTML = '<tr><td colspan="7">No homeworks defined.</td></tr>';
+                }
+            }
+        }
+
+        // Homework grading: update existing grade if same student & homework
+        function assignHomeworkGrade(hwId, grade) {
+            const homeworks = JSON.parse(localStorage.getItem('homeworks') || '[]');
+            const hw = homeworks.find(h => h.id === hwId) || {};
+            openAssignModal('homework', hwId, grade, hw.className || '', hw.section || '');
+        }
+
+        function viewHomeworkGrades(hwId) {
+            const homeworks = JSON.parse(localStorage.getItem('homeworks') || '[]');
+            const hw = homeworks.find(x => x.id === hwId) || { title: 'Homework' };
+            const grades = JSON.parse(localStorage.getItem('homeworkGrades') || '[]').filter(g => g.hwId === hwId);
+            const modal = document.getElementById('gradeModal');
+            const title = document.getElementById('gradeModalTitle');
+            const body = document.getElementById('gradeModalBody');
+            title.textContent = 'Grades for: ' + (hw.title || hwId);
+            if (grades.length === 0) {
+                body.innerHTML = '<p>No grades assigned yet for this homework.</p>';
+            } else {
+                let html = '<table style="width:100%; border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:8px">Student</th><th style="text-align:left;padding:8px">Grade</th><th style="text-align:left;padding:8px">Given By</th><th style="text-align:left;padding:8px">Assigned</th><th style="text-align:left;padding:8px">Action</th></tr></thead><tbody>';
+                grades.forEach(g => {
+                    html += `<tr><td style="padding:8px">${g.student}</td><td style="padding:8px">${g.grade}</td><td style="padding:8px">${g.givenBy || ''}</td><td style="padding:8px">${new Date(g.assignedAt).toLocaleString()}</td><td style="padding:8px"><button class="btn-delete" onclick="deleteHomeworkGrade('${g.id}','${hwId}')">Delete</button></td></tr>`;
+                });
+                html += '</tbody></table>';
+                body.innerHTML = html;
+            }
+            modal.style.display = 'flex';
+        }
+
+        function deleteHomeworkGrade(id, hwId) {
+            if (!confirm('Delete this grade entry?')) return;
+            let grades = JSON.parse(localStorage.getItem('homeworkGrades') || '[]');
+            grades = grades.filter(g => g.id !== id);
+            localStorage.setItem('homeworkGrades', JSON.stringify(grades));
+            viewHomeworkGrades(hwId);
+        }
+
+        document.getElementById('examForm') && document.getElementById('examForm').addEventListener('submit', function(ev) {
+            ev.preventDefault();
+            saveExam();
+        });
+
+        function saveExam() {
+            const className = document.getElementById('examClassName').value.trim();
+            const section = document.getElementById('examSection').value.trim();
+            const name = document.getElementById('examName').value.trim();
+            const date = document.getElementById('examDate').value;
+            const maxMarks = document.getElementById('examMaxMarks').value;
+            const description = document.getElementById('examDesc').value.trim();
+
+            if (!className || !section || !name || !date || !maxMarks) {
+                alert('Please fill required fields');
+                return;
+            }
+
+            const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+            const exam = {
+                id: 'exam_' + Date.now(),
+                className,
+                section,
+                name,
+                date,
+                maxMarks: Number(maxMarks),
+                description,
+                createdAt: new Date().toISOString(),
+                createdBy: localStorage.getItem('username') || 'unknown'
+            };
+            exams.push(exam);
+            localStorage.setItem('exams', JSON.stringify(exams));
+            alert('Exam saved');
+            closeAddExamForm();
+        }
+
+        function deleteExam(id) {
+            if (!confirm('Delete this exam?')) return;
+            let exams = JSON.parse(localStorage.getItem('exams') || '[]');
+            exams = exams.filter(e => e.id !== id);
+            localStorage.setItem('exams', JSON.stringify(exams));
+            // refresh view if visible
+            const sectionVisible = document.getElementById('examsListSection').style.display !== 'none';
+            if (sectionVisible) {
+                const firstRow = document.querySelector('#examsTableBody tr');
+                if (firstRow) {
+                    const cls = firstRow.children[0].textContent;
+                    const sec = firstRow.children[1].textContent;
+                    viewClassExams(cls, sec);
+                } else {
+                    document.getElementById('examsTableBody').innerHTML = '<tr><td colspan="7">No exams defined.</td></tr>';
+                }
+            }
+        }
+
+        // Grade assignment and viewing
+        function assignGrade(examId, grade) {
+            const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+            const exam = exams.find(e => e.id === examId) || {};
+            openAssignModal('exam', examId, grade, exam.className || '', exam.section || '');
+        }
+
+        // Assign modal: open, select student, confirm
+        function openAssignModal(type, itemId, grade, className, section) {
+            try {
+                // ensure assign modal exists
+                let modal = document.getElementById('assignGradeModal');
+                if (!modal) {
+                    console.error('assignGradeModal not found in DOM');
+                    // fallback: use simple prompt if modal missing
+                    const student = prompt('Enter student ID or name to assign grade ' + grade + ':');
+                    if (!student) return alert('Cancelled');
+                    const key = (type === 'exam') ? 'examGrades' : 'homeworkGrades';
+                    const grades = JSON.parse(localStorage.getItem(key) || '[]');
+                    const idField = (type === 'exam') ? 'examId' : 'hwId';
+                    const existing = grades.find(g => g[idField] === itemId && g.student.toLowerCase() === student.trim().toLowerCase());
+                    if (existing) {
+                        existing.grade = Number(grade);
+                        existing.assignedAt = new Date().toISOString();
+                        existing.givenBy = localStorage.getItem('username') || 'unknown';
+                        alert('Updated grade for ' + existing.student + ' to ' + grade);
+                    } else {
+                        const newGrade = { id: (type === 'exam' ? 'eg_' : 'hg_') + Date.now(), student: student.trim(), grade: Number(grade), givenBy: localStorage.getItem('username') || 'unknown', assignedAt: new Date().toISOString() };
+                        newGrade[idField] = itemId;
+                        grades.push(newGrade);
+                        alert('Assigned grade ' + grade + ' to ' + student.trim());
+                    }
+                    localStorage.setItem(key, JSON.stringify(grades));
+                    return;
+                }
+                const title = document.getElementById('assignModalTitle');
+                const select = document.getElementById('assignStudentSelect');
+                const manual = document.getElementById('assignStudentManual');
+                if (!title || !select || !manual) {
+                    console.error('Modal elements missing');
+                    return;
+                }
+                title.textContent = 'Assign grade ' + grade + ' (' + type + ')';
+                select.innerHTML = '<option value="">-- Select student (or type) --</option>';
+                const students = JSON.parse(localStorage.getItem('students') || '[]');
+                let found = false;
+                if (students && students.length) {
+                    students.forEach(s => {
+                        const cls = s.class || s.className || '';
+                        const expected = (className + (section ? '-' + section : '')).toLowerCase();
+                        if (cls && expected && cls.toLowerCase().includes(expected)) {
+                            const name = (s.firstName && s.lastName) ? (s.firstName + ' ' + s.lastName) : (s.name || s.fullName || s.studentName || '');
+                            const display = (s.rollNumber ? s.rollNumber + ' - ' : '') + (name || s.email || 'Student');
+                            const opt = document.createElement('option');
+                            opt.value = name || s.email || display;
+                            opt.textContent = display;
+                            select.appendChild(opt);
+                            found = true;
+                        }
+                    });
+                }
+                if (!found) select.innerHTML = '<option value="">(No students found) - use manual entry</option>';
+                modal.dataset.type = type;
+                modal.dataset.itemId = itemId;
+                modal.dataset.grade = grade;
+                manual.value = '';
+                modal.style.display = 'flex';
+            } catch (e) {
+                console.error('openAssignModal error:', e);
+                alert('Error opening assign modal. Using fallback prompt.');
+                const student = prompt('Enter student name/ID for grade ' + grade + ':');
+                if (student) {
+                    const key = (type === 'exam') ? 'examGrades' : 'homeworkGrades';
+                    const grades = JSON.parse(localStorage.getItem(key) || '[]');
+                    const idField = (type === 'exam') ? 'examId' : 'hwId';
+                    const newGrade = { id: (type === 'exam' ? 'eg_' : 'hg_') + Date.now(), student: student.trim(), grade: Number(grade), givenBy: localStorage.getItem('username') || 'unknown', assignedAt: new Date().toISOString() };
+                    newGrade[idField] = itemId;
+                    grades.push(newGrade);
+                    localStorage.setItem(key, JSON.stringify(grades));
+                    alert('Assigned grade ' + grade + ' to ' + student.trim());
+                }
+            }
+        }
+
+        function confirmAssignFromModal() {
+            try {
+                const modal = document.getElementById('assignGradeModal');
+                const select = document.getElementById('assignStudentSelect');
+                const manual = document.getElementById('assignStudentManual');
+                if (!modal || !select || !manual) {
+                    console.error('Modal elements missing for confirm');
+                    return;
+                }
+                const student = (select.value && select.value.trim()) ? select.value.trim() : (manual.value && manual.value.trim()) ? manual.value.trim() : '';
+                if (!student) return alert('Please select or enter a student name/ID');
+                const type = modal.dataset.type;
+                const itemId = modal.dataset.itemId;
+                const grade = Number(modal.dataset.grade);
+                if (type === 'exam') {
+                    const key = 'examGrades';
+                    const grades = JSON.parse(localStorage.getItem(key) || '[]');
+                    const existing = grades.find(g => g.examId === itemId && g.student.toLowerCase() === student.toLowerCase());
+                    if (existing) {
+                        existing.grade = grade;
+                        existing.assignedAt = new Date().toISOString();
+                        existing.givenBy = localStorage.getItem('username') || 'unknown';
+                        alert('Updated grade for ' + existing.student + ' to ' + grade);
+                    } else {
+                        grades.push({ id: 'eg_' + Date.now(), examId: itemId, student, grade, givenBy: localStorage.getItem('username') || 'unknown', assignedAt: new Date().toISOString() });
+                        alert('Assigned grade ' + grade + ' to ' + student);
+                    }
+                    localStorage.setItem(key, JSON.stringify(grades));
+                } else if (type === 'homework') {
+                    const key = 'homeworkGrades';
+                    const grades = JSON.parse(localStorage.getItem(key) || '[]');
+                    const existing = grades.find(g => g.hwId === itemId && g.student.toLowerCase() === student.toLowerCase());
+                    if (existing) {
+                        existing.grade = grade;
+                        existing.assignedAt = new Date().toISOString();
+                        existing.givenBy = localStorage.getItem('username') || 'unknown';
+                        alert('Updated grade for ' + existing.student + ' to ' + grade);
+                    } else {
+                        grades.push({ id: 'hg_' + Date.now(), hwId: itemId, student, grade, givenBy: localStorage.getItem('username') || 'unknown', assignedAt: new Date().toISOString() });
+                        alert('Assigned grade ' + grade + ' to ' + student);
+                    }
+                    localStorage.setItem(key, JSON.stringify(grades));
+                }
+                closeAssignModal();
+            } catch (e) {
+                console.error('confirmAssignFromModal error:', e);
+                alert('Error saving grade: ' + e.message);
+            }
+        }
+
+        function closeAssignModal() {
+            const modal = document.getElementById('assignGradeModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            delete modal.dataset.type;
+            delete modal.dataset.itemId;
+            delete modal.dataset.grade;
+        }
+
+        function viewExamGrades(examId) {
+            const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+            const exam = exams.find(x => x.id === examId) || { name: 'Exam' };
+            const grades = JSON.parse(localStorage.getItem('examGrades') || '[]').filter(g => g.examId === examId);
+            const modal = document.getElementById('gradeModal');
+            const title = document.getElementById('gradeModalTitle');
+            const body = document.getElementById('gradeModalBody');
+            title.textContent = 'Grades for: ' + (exam.name || examId);
+            if (grades.length === 0) {
+                body.innerHTML = '<p>No grades assigned yet for this exam.</p>';
+            } else {
+                let html = '<table style="width:100%; border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:8px">Student</th><th style="text-align:left;padding:8px">Grade</th><th style="text-align:left;padding:8px">Given By</th><th style="text-align:left;padding:8px">Assigned</th><th style="text-align:left;padding:8px">Action</th></tr></thead><tbody>';
+                grades.forEach(g => {
+                    html += `<tr><td style="padding:8px">${g.student}</td><td style="padding:8px">${g.grade}</td><td style="padding:8px">${g.givenBy || ''}</td><td style="padding:8px">${new Date(g.assignedAt).toLocaleString()}</td><td style="padding:8px"><button class="btn-delete" onclick="deleteExamGrade('${g.id}','${examId}')">Delete</button></td></tr>`;
+                });
+                html += '</tbody></table>';
+                body.innerHTML = html;
+            }
+            modal.style.display = 'flex';
+        }
+
+        function deleteExamGrade(id, examId) {
+            if (!confirm('Delete this grade entry?')) return;
+            let grades = JSON.parse(localStorage.getItem('examGrades') || '[]');
+            grades = grades.filter(g => g.id !== id);
+            localStorage.setItem('examGrades', JSON.stringify(grades));
+            viewExamGrades(examId);
+        }
+
+        function closeGradeModal() {
+            const modal = document.getElementById('gradeModal');
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

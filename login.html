@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Login</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>Shkolo</h1>
+                <p>School Management System</p>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Enter your username" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Enter your password" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group checkbox">
+                    <label>
+                        <input type="checkbox" name="remember"> Remember me
+                    </label>
+                </div>
+
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+
+            <div class="login-footer">
+                <p style="margin-bottom: 1rem;">Login with your school account credentials</p>
+                <p style="margin-top: 1rem; border-top: 1px solid #e0e0e0; padding-top: 1rem;">
+                    Don't have an account? <a href="register.html" style="color: #667eea; font-weight: 600;">Register here</a>
+                </p>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #999;">
+                    You need a school code from your administrator to register.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if setup is complete
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('setupComplete') !== 'true') {
+                window.location.href = 'setup.html';
+            }
+
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const remember = document.querySelector('input[name="remember"]').checked;
+
+            try {
+                // Get registered users from Firebase
+                const usersJson = await storageDB.getItem('registeredUsers');
+                const users = JSON.parse(usersJson || '[]');
+                const user = users.find(u => u.username === username && u.password === password);
+
+                if (user) {
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('userRole', user.userRole);
+                    localStorage.setItem('userEmail', user.email);
+                    localStorage.setItem('schoolCode', user.schoolCode);
+                    
+                    if (remember) {
+                        localStorage.setItem('rememberMe', 'true');
+                    }
+
+                    // Log login activity to Firebase
+                    const loginLog = JSON.parse(await storageDB.getItem('loginLog') || '[]');
+                    loginLog.push({
+                        username: username,
+                        userRole: user.userRole,
+                        loginTime: new Date().toISOString(),
+                        ipAddress: 'N/A'
+                    });
+                    await storageDB.setItem('loginLog', JSON.stringify(loginLog));
+
+                    alert('Login successful!');
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert('Invalid username or password!');
+                    document.getElementById('password').value = '';
+                }
+            } catch (e) {
+                console.error('Login error:', e);
+                alert('Error during login: ' + e.message + '\nTrying fallback method...');
+                
+                // Fallback to localStorage if Firebase fails
+                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                const user = users.find(u => u.username === username && u.password === password);
+
+                if (user) {
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('userRole', user.userRole);
+                    localStorage.setItem('userEmail', user.email);
+                    localStorage.setItem('schoolCode', user.schoolCode);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert('Invalid username or password!');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

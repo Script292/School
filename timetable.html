@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>School - Timetable</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+  <script src="firebase-db.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">Shkolo - Timetable</div>
+      <ul class="nav-menu">
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="students.html">Students</a></li>
+        <li><a href="teachers.html">Teachers</a></li>
+        <li><a href="classes.html">Classes</a></li>
+        <li><a href="timetable.html" class="active">Timetable</a></li>
+        <li><a href="#" onclick="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="management-container">
+    <div class="management-header">
+      <h1>Timetable & Marking Periods</h1>
+      <p>Define daily periods for each class and configure marking/reporting periods (terms).</p>
+    </div>
+
+    <section class="settings-card">
+      <h2>Class Timetable</h2>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label for="classSelect">Select Class</label>
+          <select id="classSelect"></select>
+        </div>
+        <div class="form-group" style="width:200px; align-self:flex-end;">
+          <button class="btn-primary" id="loadBtn">Load Timetable</button>
+        </div>
+      </div>
+
+      <div id="timetableArea" style="margin-top:1rem; display:none;">
+        <div class="period-form">
+          <h3>Add Period</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="periodName">Period Name</label>
+              <input id="periodName" placeholder="e.g., Period 1 / Math" />
+            </div>
+            <div class="form-group">
+              <label for="periodStart">Start Time</label>
+              <input id="periodStart" type="time" />
+            </div>
+            <div class="form-group">
+              <label for="periodEnd">End Time</label>
+              <input id="periodEnd" type="time" />
+            </div>
+            <div class="form-group">
+              <label for="periodDay">Day</label>
+              <select id="periodDay">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+              </select>
+            </div>
+            <div class="form-group" style="align-self:flex-end;">
+              <button class="btn-success" id="addPeriodBtn">Add Period</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem;">
+          <h3>Periods for <span id="classTitle"></span></h3>
+          <div id="periodsList"></div>
+          <div style="margin-top:1rem; display:flex; gap:8px;">
+            <button class="btn-primary" id="saveTimetableBtn">Save Timetable</button>
+            <button class="btn-cancel" id="clearTimetableBtn">Clear Timetable</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="settings-card">
+      <h2>Marking Periods (Terms)</h2>
+      <div class="period-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="mpName">Name</label>
+            <input id="mpName" placeholder="e.g., Term 1" />
+          </div>
+          <div class="form-group">
+            <label for="mpStart">Start Date</label>
+            <input id="mpStart" type="date" />
+          </div>
+          <div class="form-group">
+            <label for="mpEnd">End Date</label>
+            <input id="mpEnd" type="date" />
+          </div>
+          <div class="form-group">
+            <label for="mpWeight">Weight (%)</label>
+            <input id="mpWeight" type="number" min="0" max="100" value="100" />
+          </div>
+          <div class="form-group" style="align-self:flex-end;">
+            <button class="btn-success" id="addMPBtn">Add Marking Period</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:1rem;">
+        <h3>Configured Marking Periods</h3>
+        <table class="management-table" id="mpTable">
+          <thead>
+            <tr><th>Name</th><th>Start</th><th>End</th><th>Weight</th><th>Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2025 Shkolo</p>
+    </div>
+  </footer>
+
+  <script>
+    // Role check: allowed Administrator and Teacher
+    document.addEventListener('DOMContentLoaded', function() {
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
+      const role = localStorage.getItem('userRole');
+      if (role !== 'Administrator' && role !== 'Teacher') {
+        alert('Access denied. Only Administrators and Teachers can manage timetables.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      loadClasses();
+      loadMarkingPeriods();
+    });
+
+    function logout() {
+      if (confirm('Logout?')) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userRole');
+        window.location.href = 'login.html';
+      }
+    }
+
+    function loadClasses() {
+      // Try classes stored by import or admin tools
+      let classes = JSON.parse(localStorage.getItem('classesData') || 'null');
+      if (!classes) classes = JSON.parse(localStorage.getItem('classes') || 'null');
+      if (!classes) {
+        // fallback sample classes
+        classes = [
+          { id: '9-A', name: 'Grade 9-A' },
+          { id: '10-A', name: 'Grade 10-A' },
+          { id: '11-B', name: 'Grade 11-B' }
+        ];
+      }
+
+      const select = document.getElementById('classSelect');
+      select.innerHTML = '';
+      classes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id || c.name;
+        opt.textContent = c.name || c.id;
+        select.appendChild(opt);
+      });
+
+      document.getElementById('loadBtn').addEventListener('click', function() {
+        loadTimetableFor(select.value);
+      });
+
+      // auto-load first
+      if (select.options.length) {
+        loadTimetableFor(select.options[0].value);
+      }
+    }
+
+    function loadTimetableFor(classId) {
+      document.getElementById('timetableArea').style.display = 'block';
+      document.getElementById('classTitle').textContent = classId;
+
+      const data = JSON.parse(localStorage.getItem('timetables') || '{}');
+      const periods = data[classId] || [];
+      renderPeriods(periods);
+
+      document.getElementById('addPeriodBtn').onclick = function(e) {
+        e.preventDefault();
+        addPeriod(classId);
+      };
+
+      document.getElementById('saveTimetableBtn').onclick = function() {
+        saveTimetable(classId);
+      };
+
+      document.getElementById('clearTimetableBtn').onclick = function() {
+        if (confirm('Clear timetable for ' + classId + '?')) {
+          const all = JSON.parse(localStorage.getItem('timetables') || '{}');
+          delete all[classId];
+          localStorage.setItem('timetables', JSON.stringify(all));
+          renderPeriods([]);
+          alert('Timetable cleared');
+        }
+      };
+    }
+
+    function renderPeriods(periods) {
+      const container = document.getElementById('periodsList');
+      container.innerHTML = '';
+      if (!periods.length) {
+        container.innerHTML = '<p style="color:#666;">No periods defined yet.</p>';
+        return;
+      }
+
+      // Group by day
+      const days = {};
+      periods.forEach(p => {
+        if (!days[p.day]) days[p.day] = [];
+        days[p.day].push(p);
+      });
+
+      for (const day of ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']) {
+        const dayPeriods = days[day] || [];
+        const dayCard = document.createElement('div');
+        dayCard.className = 'day-card';
+        const h = document.createElement('h4');
+        h.textContent = day;
+        dayCard.appendChild(h);
+
+        if (!dayPeriods.length) {
+          const p = document.createElement('p');
+          p.style.color = '#999';
+          p.textContent = 'No periods';
+          dayCard.appendChild(p);
+        } else {
+          dayPeriods.sort((a,b)=> a.start.localeCompare(b.start));
+          dayPeriods.forEach((p, idx) => {
+            const row = document.createElement('div');
+            row.className = 'period-row';
+            row.innerHTML = `<div class="period-info"><strong>${p.name}</strong><div class="period-time">${p.start} - ${p.end}</div></div>
+                             <div class="period-actions"><button class="btn-delete btn-small">Remove</button></div>`;
+            row.querySelector('.btn-delete').onclick = function() {
+              if (confirm('Remove this period?')) {
+                removePeriod(p);
+              }
+            };
+            dayCard.appendChild(row);
+          });
+        }
+
+        container.appendChild(dayCard);
+      }
+    }
+
+    function addPeriod(classId) {
+      const name = document.getElementById('periodName').value.trim();
+      const start = document.getElementById('periodStart').value;
+      const end = document.getElementById('periodEnd').value;
+      const day = document.getElementById('periodDay').value;
+
+      if (!name || !start || !end) {
+        alert('Please fill name, start and end time');
+        return;
+      }
+
+      const all = JSON.parse(localStorage.getItem('timetables') || '{}');
+      if (!all[classId]) all[classId] = [];
+      const period = { id: Date.now()+Math.random(), name, start, end, day };
+      all[classId].push(period);
+      localStorage.setItem('timetables', JSON.stringify(all));
+
+      renderPeriods(all[classId]);
+
+      // clear inputs
+      document.getElementById('periodName').value = '';
+      document.getElementById('periodStart').value = '';
+      document.getElementById('periodEnd').value = '';
+    }
+
+    function removePeriod(periodObj) {
+      const classId = document.getElementById('classTitle').textContent;
+      const all = JSON.parse(localStorage.getItem('timetables') || '{}');
+      if (!all[classId]) return;
+      all[classId] = all[classId].filter(p=> p.id !== periodObj.id);
+      localStorage.setItem('timetables', JSON.stringify(all));
+      renderPeriods(all[classId]);
+    }
+
+    function saveTimetable(classId) {
+      // already saved on add; just confirm
+      alert('Timetable for ' + classId + ' saved.');
+    }
+
+    // Marking periods
+    function loadMarkingPeriods() {
+      const list = JSON.parse(localStorage.getItem('markingPeriods') || '[]');
+      renderMarkingPeriods(list);
+      document.getElementById('addMPBtn').onclick = function(e){ e.preventDefault(); addMarkingPeriod(); };
+    }
+
+    function renderMarkingPeriods(list) {
+      const tbody = document.querySelector('#mpTable tbody');
+      tbody.innerHTML = '';
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:#999;">No marking periods configured.</td></tr>';
+        return;
+      }
+      list.forEach((mp, idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${mp.name}</td><td>${mp.start}</td><td>${mp.end}</td><td>${mp.weight}%</td><td><button class="btn-delete btn-small">Delete</button></td>`;
+        tr.querySelector('.btn-delete').onclick = function(){ if(confirm('Delete marking period?')){ removeMarkingPeriod(idx);} };
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addMarkingPeriod() {
+      const name = document.getElementById('mpName').value.trim();
+      const start = document.getElementById('mpStart').value;
+      const end = document.getElementById('mpEnd').value;
+      const weight = parseFloat(document.getElementById('mpWeight').value) || 0;
+      if (!name || !start || !end) { alert('Please fill all marking period fields'); return; }
+      const list = JSON.parse(localStorage.getItem('markingPeriods') || '[]');
+      list.push({ name, start, end, weight });
+      localStorage.setItem('markingPeriods', JSON.stringify(list));
+      renderMarkingPeriods(list);
+
+      document.getElementById('mpName').value = '';
+      document.getElementById('mpStart').value = '';
+      document.getElementById('mpEnd').value = '';
+      document.getElementById('mpWeight').value = '100';
+    }
+
+    function removeMarkingPeriod(index) {
+      const list = JSON.parse(localStorage.getItem('markingPeriods') || '[]');
+      list.splice(index,1);
+      localStorage.setItem('markingPeriods', JSON.stringify(list));
+      renderMarkingPeriods(list);
+    }
+
+  </script>
+</body>
+</html>

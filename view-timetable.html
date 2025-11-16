@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>School - View Timetable</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+  <script src="firebase-db.js"></script>
+  <script src="translations.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">Shkolo - Class Timetable</div>
+      <ul class="nav-menu">
+        <li><a href="student-dashboard.html" id="backDashboard">Back to Dashboard</a></li>
+        <li><a href="#" onclick="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="management-container">
+    <div class="management-header">
+      <h1>📅 Class Timetable</h1>
+      <p>View your class schedule with teacher assignments</p>
+    </div>
+
+    <!-- Class Info and Download -->
+    <section class="settings-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <h2 id="displayClassName">Class Timetable</h2>
+          <p id="displayClassInfo" style="color: #666;">Loading...</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-primary" onclick="printTimetable()">🖨️ Print</button>
+          <button class="btn-success" onclick="downloadTimetable()">⬇️ Download</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Timetable Grid -->
+    <section class="settings-card" id="timetableViewArea" style="display: none;">
+      <div id="timetableViewGrid" style="display: grid; gap: 1rem;">
+        <!-- Days will be rendered here -->
+      </div>
+    </section>
+
+    <!-- Empty State -->
+    <section class="settings-card" id="emptyState">
+      <p style="text-align: center; color: #999; padding: 2rem;">
+        ℹ️ No timetable available yet. Please check back later.
+      </p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2025 Shkolo</p>
+    </div>
+  </footer>
+
+  <script>
+    let classId = null;
+    let timetableData = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const role = localStorage.getItem('userRole');
+      if (role !== 'Student' && role !== 'Teacher' && role !== 'Administrator') {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // Get class ID from URL parameter or use first enrolled class
+      const params = new URLSearchParams(window.location.search);
+      classId = params.get('class');
+
+      if (!classId && role === 'Student') {
+        // Students: get their first enrolled class
+        const studentClasses = ['Grade 9-A', 'Grade 10-A', 'Grade 11-B'];
+        classId = studentClasses[0];
+      } else if (!classId && role === 'Teacher') {
+        // Teachers: get their first class
+        const teacherClasses = ['Grade 9-A', 'Grade 10-A', 'Grade 11-B'];
+        classId = teacherClasses[0];
+      }
+
+      if (!classId) classId = 'Grade 9-A';
+
+      loadTimetable();
+    });
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userRole');
+        window.location.href = 'login.html';
+      }
+    }
+
+    function loadTimetable() {
+      const allTimetables = JSON.parse(localStorage.getItem('adminTimetables') || '{}');
+      timetableData = allTimetables[classId] || [];
+
+      document.getElementById('displayClassName').textContent = `Timetable for ${classId}`;
+      document.getElementById('displayClassInfo').textContent = `Total Periods: ${timetableData.length}`;
+
+      if (timetableData.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('timetableViewArea').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('timetableViewArea').style.display = 'block';
+
+      renderTimetableView();
+    }
+
+    function renderTimetableView() {
+      const container = document.getElementById('timetableViewGrid');
+      container.innerHTML = '';
+
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      days.forEach(day => {
+        const dayPeriods = timetableData.filter(p => p.day === day).sort((a, b) => a.start.localeCompare(b.start));
+        
+        const dayCard = document.createElement('div');
+        dayCard.className = 'day-card';
+        dayCard.style.borderLeft = '4px solid #667eea';
+        
+        let html = `<h3 style="color: #667eea; margin-bottom: 1rem; font-size: 1.1rem;">${day}</h3>`;
+
+        if (dayPeriods.length === 0) {
+          html += '<p style="color: #999; font-style: italic;">No classes scheduled</p>';
+        } else {
+          dayPeriods.forEach((p, idx) => {
+            const bgColor = idx % 2 === 0 ? '#f0f4ff' : '#ffffff';
+            html += `
+              <div style="background: ${bgColor}; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border: 1px solid #e0e7ff;">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                  <div style="flex: 1;">
+                    <h4 style="color: #667eea; margin: 0 0 0.5rem 0; font-size: 1rem;">${p.name}</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; font-size: 0.95rem;">
+                      <div>
+                        <span style="color: #999;">⏰ Time:</span>
+                        <div style="font-weight: 600; color: #333;">${p.start} - ${p.end}</div>
+                      </div>
+                      <div>
+                        <span style="color: #999;">👨‍🏫 Teacher:</span>
+                        <div style="font-weight: 600; color: #333;">${p.teacher}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; font-size: 0.85rem; color: #999;">
+                    Added: ${p.addedDate}
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        dayCard.innerHTML = html;
+        container.appendChild(dayCard);
+      });
+    }
+
+    function printTimetable() {
+      const printWindow = window.open('', '', 'height=600,width=800');
+      const content = document.querySelector('.management-container').innerHTML;
+      printWindow.document.write(`
+        <html><head><title>Shkolo - ${classId} Timetable</title>
+        <style>
+          body { font-family: Arial; margin: 20px; }
+          h1 { color: #667eea; }
+          .day-card { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+          h3 { color: #667eea; margin-top: 0; }
+        </style></head><body>
+        ${content}
+        </body></html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    function downloadTimetable() {
+      const csv = generateCSV();
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${classId}-timetable.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function generateCSV() {
+      let csv = `Shkolo Timetable - ${classId}\n`;
+      csv += `Generated: ${new Date().toLocaleString()}\n\n`;
+      csv += 'Day,Period Name,Start Time,End Time,Teacher\n';
+
+      timetableData.sort((a, b) => {
+        const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayDiff = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+        return dayDiff !== 0 ? dayDiff : a.start.localeCompare(b.start);
+      }).forEach(p => {
+        csv += `"${p.day}","${p.name}","${p.start}","${p.end}","${p.teacher}"\n`;
+      });
+
+      return csv;
+    }
+  </script>
+</body>
+</html>

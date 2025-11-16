@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - My Classes</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Student Portal</div>
+            <ul class="nav-menu">
+                <li><a href="student-dashboard.html">Dashboard</a></li>
+                <li><a href="student-classes.html">My Classes</a></li>
+                <li><a href="student-attendance.html">Attendance</a></li>
+                <li><a href="student-grades.html">Grades</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>My Classes</h1>
+            <p>View your enrolled classes and teachers</p>
+        </div>
+
+        <!-- Classes Grid -->
+        <section class="classes-grid">
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>Mathematics</h3>
+                    <span class="class-badge">Grade 10-A</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Teacher:</strong> Mr. Ahmed Khan</p>
+                    <p><strong>Time:</strong> 9:00 AM - 10:00 AM</p>
+                    <p><strong>Room:</strong> 102</p>
+                    <p><strong>Attendance:</strong> 94%</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Details</button>
+                    <button class="btn-timetable" onclick="viewTimetable('10-A')">📅 View Timetable</button>
+                </div>
+            </div>
+
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>English</h3>
+                    <span class="class-badge">Grade 10-A</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Teacher:</strong> Mrs. Fatima Ali</p>
+                    <p><strong>Time:</strong> 10:00 AM - 11:00 AM</p>
+                    <p><strong>Room:</strong> 103</p>
+                    <p><strong>Attendance:</strong> 92%</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Details</button>
+                    <button class="btn-timetable" onclick="viewTimetable('10-A')">📅 View Timetable</button>
+                </div>
+            </div>
+
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>Science</h3>
+                    <span class="class-badge">Grade 10-A</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Teacher:</strong> Dr. Hassan Ibrahim</p>
+                    <p><strong>Time:</strong> 11:00 AM - 12:00 PM</p>
+                    <p><strong>Room:</strong> 105</p>
+                    <p><strong>Attendance:</strong> 96%</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Details</button>
+                    <button class="btn-timetable" onclick="viewTimetable('10-A')">📅 View Timetable</button>
+                </div>
+            </div>
+
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>History</h3>
+                    <span class="class-badge">Grade 10-A</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Teacher:</strong> Mr. John Smith</p>
+                    <p><strong>Time:</strong> 1:00 PM - 2:00 PM</p>
+                    <p><strong>Room:</strong> 106</p>
+                    <p><strong>Attendance:</strong> 90%</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Details</button>
+                    <button class="btn-timetable" onclick="viewTimetable('10-A')">📅 View Timetable</button>
+                </div>
+            </div>
+
+            <div class="class-card">
+                <div class="class-header">
+                    <h3>Physical Education</h3>
+                    <span class="class-badge">Grade 10-A</span>
+                </div>
+                <div class="class-details">
+                    <p><strong>Teacher:</strong> Coach Mike Davis</p>
+                    <p><strong>Time:</strong> 2:00 PM - 3:00 PM</p>
+                    <p><strong>Room:</strong> Gym</p>
+                    <p><strong>Attendance:</strong> 88%</p>
+                </div>
+                <div class="class-actions">
+                    <button class="btn-view">View Details</button>
+                    <button class="btn-timetable" onclick="viewTimetable('10-A')">📅 View Timetable</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section class="settings-card">
+            <h2>Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>Total Classes</h4>
+                    <p class="summary-value">5</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Total Teachers</h4>
+                    <p class="summary-value">5</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Average Attendance</h4>
+                    <p class="summary-value">92%</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userRole') !== 'Student') {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+
+        function viewTimetable(classId) {
+            window.location.href = 'view-timetable.html?class=' + encodeURIComponent(classId);
+        }
+    </script>
+</body>
+</html>

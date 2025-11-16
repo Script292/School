@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Setup</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-box" style="max-width: 600px;">
+            <div class="login-header">
+                <h1>Shkolo</h1>
+                <p>School Management System</p>
+            </div>
+
+            <div id="setupStep1">
+                <h2 style="text-align: center; color: #667eea; margin-bottom: 1.5rem;">Initial Setup</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 2rem;">
+                    Welcome! This is your first time. Please create your first school and admin account.
+                </p>
+
+                <form class="login-form" id="setupForm">
+                    <h3 style="color: #667eea; margin-bottom: 1rem;">School Information</h3>
+
+                    <div class="form-group">
+                        <label for="schoolName">School Name *</label>
+                        <input 
+                            type="text" 
+                            id="schoolName" 
+                            name="schoolName" 
+                            placeholder="Enter school name" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="schoolAddress">School Address</label>
+                        <input 
+                            type="text" 
+                            id="schoolAddress" 
+                            name="schoolAddress" 
+                            placeholder="Enter school address" 
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="schoolPhone">School Phone</label>
+                        <input 
+                            type="tel" 
+                            id="schoolPhone" 
+                            name="schoolPhone" 
+                            placeholder="Enter school phone number" 
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="schoolEmail">School Email</label>
+                        <input 
+                            type="email" 
+                            id="schoolEmail" 
+                            name="schoolEmail" 
+                            placeholder="Enter school email" 
+                        >
+                    </div>
+
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e0e0e0;">
+
+                    <h3 style="color: #667eea; margin-bottom: 1rem;">Admin Account</h3>
+
+                    <div class="form-row-reg">
+                        <div class="form-group">
+                            <label for="adminFirstName">First Name *</label>
+                            <input 
+                                type="text" 
+                                id="adminFirstName" 
+                                name="adminFirstName" 
+                                placeholder="Enter first name" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="adminLastName">Last Name *</label>
+                            <input 
+                                type="text" 
+                                id="adminLastName" 
+                                name="adminLastName" 
+                                placeholder="Enter last name" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminEmail">Email *</label>
+                        <input 
+                            type="email" 
+                            id="adminEmail" 
+                            name="adminEmail" 
+                            placeholder="Enter your email" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminUsername">Username *</label>
+                        <input 
+                            type="text" 
+                            id="adminUsername" 
+                            name="adminUsername" 
+                            placeholder="Choose admin username" 
+                            required
+                        >
+                        <small style="color: #999; margin-top: 0.3rem; display: block;">
+                            Minimum 3 characters
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adminPassword">Password *</label>
+                        <input 
+                            type="password" 
+                            id="adminPassword" 
+                            name="adminPassword" 
+                            placeholder="Create a strong password" 
+                            required
+                        >
+                        <small style="color: #999; margin-top: 0.3rem; display: block;">
+                            Minimum 6 characters
+                        </small>
+                    </div>
+
+                    <button type="submit" class="login-btn" style="margin-top: 2rem;">Complete Setup</button>
+                </form>
+            </div>
+
+            <div id="setupStep2" style="display: none;">
+                <h2 style="text-align: center; color: #667eea; margin-bottom: 1.5rem;">✓ Setup Complete!</h2>
+                
+                <div class="setup-success">
+                    <div class="success-message">
+                        <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                            Your school has been created successfully!
+                        </p>
+                        <p style="color: #666; margin-bottom: 2rem;">
+                            Share this code with teachers and staff to register in your school.
+                        </p>
+
+                        <div class="school-code-display">
+                            <label>School Code:</label>
+                            <div class="code-box">
+                                <span id="schoolCodeDisplay"></span>
+                                <button type="button" class="btn-copy" onclick="copySchoolCode()">📋 Copy</button>
+                            </div>
+                        </div>
+
+                        <div class="school-info-box">
+                            <h4>School Information:</h4>
+                            <p id="schoolNameDisplay"></p>
+                            <p id="schoolAddressDisplay"></p>
+                            <p id="schoolPhoneDisplay"></p>
+                            <p id="schoolEmailDisplay"></p>
+                        </div>
+
+                        <div class="admin-info-box">
+                            <h4>Your Admin Account:</h4>
+                            <p><strong>Username:</strong> <span id="adminUsernameDisplay"></span></p>
+                            <p style="color: #999; font-size: 0.9rem;">Password: (saved securely)</p>
+                        </div>
+
+                        <button type="button" class="login-btn" onclick="goToLogin()" style="margin-top: 2rem;">
+                            Go to Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate random school code
+        function generateSchoolCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // Check if setup is already done. If done, only allow Administrators to open and edit setup.
+        document.addEventListener('DOMContentLoaded', function() {
+            const setupDone = localStorage.getItem('setupComplete') === 'true';
+            if (setupDone) {
+                // allow an already-logged-in Administrator to edit setup
+                if (localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('userRole') === 'Administrator') {
+                    // prefill the form with existing school and admin info for editing
+                    const school = JSON.parse(localStorage.getItem('school') || '{}');
+                    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                    const admin = users.find(u => u.userRole === 'Administrator') || {};
+
+                    if (school.name) document.getElementById('schoolName').value = school.name;
+                    if (school.address) document.getElementById('schoolAddress').value = school.address;
+                    if (school.phone) document.getElementById('schoolPhone').value = school.phone;
+                    if (school.email) document.getElementById('schoolEmail').value = school.email;
+
+                    if (admin.firstName) document.getElementById('adminFirstName').value = admin.firstName;
+                    if (admin.lastName) document.getElementById('adminLastName').value = admin.lastName;
+                    if (admin.email) document.getElementById('adminEmail').value = admin.email;
+                    if (admin.username) document.getElementById('adminUsername').value = admin.username;
+
+                    // change header & button text to indicate edit mode
+                    const heading = document.querySelector('#setupStep1 h2');
+                    if (heading) heading.textContent = 'Edit School Setup';
+                    const submitBtn = document.querySelector('#setupForm button[type="submit"]');
+                    if (submitBtn) submitBtn.textContent = 'Save Changes';
+
+                } else {
+                    // otherwise redirect to login (normal users)
+                    window.location.href = 'login.html';
+                }
+            }
+        });
+
+        document.getElementById('setupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const schoolAddress = document.getElementById('schoolAddress').value.trim();
+            const schoolPhone = document.getElementById('schoolPhone').value.trim();
+            const schoolEmail = document.getElementById('schoolEmail').value.trim();
+            const adminFirstName = document.getElementById('adminFirstName').value.trim();
+            const adminLastName = document.getElementById('adminLastName').value.trim();
+            const adminEmail = document.getElementById('adminEmail').value.trim();
+            const adminUsername = document.getElementById('adminUsername').value.trim();
+            const adminPassword = document.getElementById('adminPassword').value;
+
+            // Validation
+            if (!schoolName) {
+                alert('Please enter school name');
+                return;
+            }
+
+            if (!adminFirstName || !adminLastName) {
+                alert('Please enter first and last name');
+                return;
+            }
+
+            if (!adminEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            if (adminUsername.length < 3) {
+                alert('Username must be at least 3 characters');
+                return;
+            }
+
+            if (adminPassword.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+
+            // Determine if this is initial setup or an edit
+            const initialSetup = localStorage.getItem('setupComplete') !== 'true';
+
+            // Generate or preserve school code
+            const existingSchool = JSON.parse(localStorage.getItem('school') || '{}');
+            const schoolCode = initialSetup ? generateSchoolCode() : (existingSchool.code || generateSchoolCode());
+
+            // Create or update school object
+            const school = {
+                id: existingSchool.id || Date.now(),
+                code: schoolCode,
+                name: schoolName,
+                address: schoolAddress,
+                phone: schoolPhone,
+                email: schoolEmail,
+                createdDate: existingSchool.createdDate || new Date().toLocaleString(),
+                admin: adminUsername,
+                signed: existingSchool.signed || false,
+                signedBy: existingSchool.signedBy || undefined,
+                signedDate: existingSchool.signedDate || undefined
+            };
+
+            // Create admin user object (for initial setup or fallback)
+            const adminUser = {
+                firstName: adminFirstName,
+                lastName: adminLastName,
+                email: adminEmail,
+                phone: '',
+                userRole: 'Administrator',
+                username: adminUsername,
+                password: adminPassword,
+                schoolCode: schoolCode,
+                registeredDate: new Date().toLocaleString()
+            };
+
+            if (initialSetup) {
+                // Save initial setup
+                localStorage.setItem('school', JSON.stringify(school));
+                localStorage.setItem('registeredUsers', JSON.stringify([adminUser]));
+                localStorage.setItem('setupComplete', 'true');
+                localStorage.setItem('schoolCode', schoolCode);
+
+                // Display success screen
+                displaySuccessScreen(school, adminUser);
+            } else {
+                // Editing existing setup: update school and admin user in registeredUsers
+                localStorage.setItem('school', JSON.stringify(school));
+                let users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                const adminIndex = users.findIndex(u => u.userRole === 'Administrator');
+                if (adminIndex !== -1) {
+                    users[adminIndex].firstName = adminFirstName;
+                    users[adminIndex].lastName = adminLastName;
+                    users[adminIndex].email = adminEmail;
+                    users[adminIndex].username = adminUsername;
+                    // update password only if user provided a new one
+                    if (adminPassword && adminPassword.length >= 6) users[adminIndex].password = adminPassword;
+                    users[adminIndex].registeredDate = users[adminIndex].registeredDate || new Date().toLocaleString();
+                } else {
+                    users.push(adminUser);
+                }
+                localStorage.setItem('registeredUsers', JSON.stringify(users));
+
+                alert('Setup updated successfully');
+                displaySuccessScreen(school, users[adminIndex] || adminUser);
+            }
+        });
+
+        function displaySuccessScreen(school, admin) {
+            document.getElementById('setupStep1').style.display = 'none';
+            document.getElementById('setupStep2').style.display = 'block';
+
+            document.getElementById('schoolCodeDisplay').textContent = school.code;
+            document.getElementById('schoolNameDisplay').textContent = `Name: ${school.name}`;
+            document.getElementById('schoolAddressDisplay').textContent = school.address ? `Address: ${school.address}` : '';
+            document.getElementById('schoolPhoneDisplay').textContent = school.phone ? `Phone: ${school.phone}` : '';
+            document.getElementById('schoolEmailDisplay').textContent = school.email ? `Email: ${school.email}` : '';
+            document.getElementById('adminUsernameDisplay').textContent = admin.username;
+        }
+
+        function copySchoolCode() {
+            const code = document.getElementById('schoolCodeDisplay').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('School code copied to clipboard!');
+            });
+        }
+
+        function goToLogin() {
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

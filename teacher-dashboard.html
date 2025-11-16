@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Teacher Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Teacher Portal</div>
+            <ul class="nav-menu">
+                <li><a href="teacher-dashboard.html">Dashboard</a></li>
+                <li><a href="teacher-classes.html">My Classes</a></li>
+                <li><a href="teacher-attendance.html">Mark Attendance</a></li>
+                <li><a href="teacher-grades.html">Grades</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome, Teacher! 👨‍🏫</h1>
+            <p id="userGreeting"></p>
+            <!-- Quick Login Buttons -->
+            <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: center;">
+                <button class="btn-primary" onclick="quickLogin('Teacher')" style="padding: 8px 16px; font-size: 14px;">🔄 Login as Teacher</button>
+                <button class="btn-primary" onclick="quickLogin('Administrator')" style="padding: 8px 16px; font-size: 14px;">🔄 Login as Admin</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- My Classes Card -->
+            <div class="dashboard-card">
+                <div class="card-icon teachers-icon">📚</div>
+                <div class="card-content">
+                    <h3>My Classes</h3>
+                    <p class="card-number" id="myClassesCount">0</p>
+                    <a href="teacher-classes.html" class="card-link">View Classes</a>
+                </div>
+            </div>
+
+            <!-- Total Students Card -->
+            <div class="dashboard-card">
+                <div class="card-icon students-icon">👥</div>
+                <div class="card-content">
+                    <h3>My Students</h3>
+                    <p class="card-number" id="myStudentsCount">0</p>
+                    <a href="teacher-classes.html" class="card-link">View All</a>
+                </div>
+            </div>
+
+            <!-- Attendance Card -->
+            <div class="dashboard-card">
+                <div class="card-icon attendance-icon">📊</div>
+                <div class="card-content">
+                    <h3>Today's Attendance</h3>
+                    <p class="card-number" id="todayAttendance">--</p>
+                    <a href="teacher-attendance.html" class="card-link">Mark Now</a>
+                </div>
+            </div>
+
+            <!-- Grades Card -->
+            <div class="dashboard-card">
+                <div class="card-icon classes-icon">📈</div>
+                <div class="card-content">
+                    <h3>Grades</h3>
+                    <p class="card-number" id="gradesCount">0</p>
+                    <a href="teacher-grades.html" class="card-link">Manage</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="location.href='teacher-attendance.html'">
+                    <span class="btn-icon">✓</span>
+                    <span class="btn-text">Mark Attendance</span>
+                </button>
+                <button class="action-btn" onclick="location.href='teacher-grades.html'">
+                    <span class="btn-icon">📝</span>
+                    <span class="btn-text">Enter Grades</span>
+                </button>
+                <button class="action-btn" onclick="location.href='teacher-classes.html'">
+                    <span class="btn-icon">📚</span>
+                    <span class="btn-text">View Classes</span>
+                </button>
+                <button class="action-btn" onclick="location.href='contact.html'">
+                    <span class="btn-icon">📧</span>
+                    <span class="btn-text">Contact Support</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Recent Activities -->
+        <section class="recent-activities">
+            <h2>Recent Activities</h2>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon">✓</div>
+                    <div class="activity-content">
+                        <p class="activity-text">Attendance marked for Grade 10-A</p>
+                        <p class="activity-time">Today at 9:00 AM</p>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">📝</div>
+                    <div class="activity-content">
+                        <p class="activity-text">Grades submitted for Mathematics Quiz</p>
+                        <p class="activity-time">Yesterday at 3:30 PM</p>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">📧</div>
+                    <div class="activity-content">
+                        <p class="activity-text">Message received from Principal</p>
+                        <p class="activity-time">2 days ago</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Teacher Stats -->
+        <section class="statistics">
+            <h2>Your Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h4>Classes Taught</h4>
+                    <p id="classesCount">0</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Total Students</h4>
+                    <p id="totalStudents">0</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Avg Attendance</h4>
+                    <p id="avgAttendance">--</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check login and role
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
+
+            if (localStorage.getItem('userRole') !== 'Teacher') {
+                window.location.href = 'dashboard.html';
+            }
+
+            loadTeacherData();
+        });
+
+        function loadTeacherData() {
+            const username = localStorage.getItem('username');
+            const schoolCode = localStorage.getItem('schoolCode');
+
+            // Set greeting
+            document.getElementById('userGreeting').textContent = 'Welcome back! Here\'s your overview for today.';
+
+            // Mock data - in real app, fetch from server
+            document.getElementById('myClassesCount').textContent = '3';
+            document.getElementById('myStudentsCount').textContent = '85';
+            document.getElementById('todayAttendance').textContent = '92%';
+            document.getElementById('gradesCount').textContent = '45';
+
+            document.getElementById('classesCount').textContent = '3 Classes';
+            document.getElementById('totalStudents').textContent = '85 Students';
+            document.getElementById('avgAttendance').textContent = '92%';
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+
+        function quickLogin(role) {
+            localStorage.setItem('setupComplete', 'true');
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', role + ' Test');
+            localStorage.setItem('userRole', role);
+            if (role === 'Teacher') return window.location.href = 'teacher-classes.html';
+            if (role === 'Administrator') return window.location.href = 'classes.html';
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

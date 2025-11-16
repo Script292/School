@@ -1,0 +1,17 @@
+{
+  "name": "shkolo-school-management",
+  "version": "1.0.0",
+  "description": "School Management System with Firebase Backend",
+  "main": "index.html",
+  "scripts": {
+    "dev": "serve",
+    "build": "echo 'Static site, no build needed'",
+    "start": "serve"
+  },
+  "keywords": ["school", "management", "firebase"],
+  "author": "ivayloongame-lab",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.0.0"
+  }
+}

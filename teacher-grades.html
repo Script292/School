@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Grades</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Teacher Portal</div>
+            <ul class="nav-menu">
+                <li><a href="teacher-dashboard.html">Dashboard</a></li>
+                <li><a href="teacher-classes.html">My Classes</a></li>
+                <li><a href="teacher-attendance.html">Mark Attendance</a></li>
+                <li><a href="teacher-grades.html">Grades</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>Manage Grades</h1>
+            <p>Enter and manage student grades</p>
+        </div>
+
+        <!-- Grade Entry Section -->
+        <section class="settings-card">
+            <h2>Enter Grades</h2>
+
+            <div class="search-filter">
+                <select class="filter-select" id="gradeClass" onchange="loadGradeForm()">
+                    <option value="">Select Class</option>
+                    <option value="Grade 9-A">Grade 9-A</option>
+                    <option value="Grade 10-A">Grade 10-A</option>
+                    <option value="Grade 11-B">Grade 11-B</option>
+                </select>
+                <select class="filter-select" id="gradeType">
+                    <option value="">Assessment Type</option>
+                    <option value="Quiz">Quiz</option>
+                    <option value="MidTerm">Mid Term</option>
+                    <option value="FinalExam">Final Exam</option>
+                    <option value="Project">Project</option>
+                </select>
+            </div>
+
+            <form id="gradeForm" style="display: none;">
+                <table class="management-table" style="margin-top: 1.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Roll No.</th>
+                            <th>Student Name</th>
+                            <th>Score (Out of 100)</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>001</td>
+                            <td>Ahmed Hassan</td>
+                            <td><input type="number" min="0" max="100" placeholder="Score" class="score-input"></td>
+                            <td><span class="grade-display">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>002</td>
+                            <td>Fatima Ahmed</td>
+                            <td><input type="number" min="0" max="100" placeholder="Score" class="score-input"></td>
+                            <td><span class="grade-display">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>003</td>
+                            <td>Mohamed Ali</td>
+                            <td><input type="number" min="0" max="100" placeholder="Score" class="score-input"></td>
+                            <td><span class="grade-display">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>004</td>
+                            <td>Sarah Johnson</td>
+                            <td><input type="number" min="0" max="100" placeholder="Score" class="score-input"></td>
+                            <td><span class="grade-display">-</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button type="submit" class="btn-success" style="flex: 1;">💾 Save Grades</button>
+                    <button type="button" class="btn-cancel" onclick="resetGrades()" style="flex: 1;">Clear</button>
+                </div>
+            </form>
+
+            <p id="selectGradeMsg" style="text-align: center; color: #999; padding: 2rem;">
+                Please select a class to enter grades
+            </p>
+        </section>
+
+        <!-- Grade History -->
+        <section class="settings-card">
+            <h2>Grade Records</h2>
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Assessment</th>
+                        <th>Date Entered</th>
+                        <th>Students</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Grade 9-A</td>
+                        <td>Quiz 1</td>
+                        <td>2025-11-15</td>
+                        <td>38</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                    <tr>
+                        <td>Grade 10-A</td>
+                        <td>Mid Term</td>
+                        <td>2025-11-10</td>
+                        <td>40</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userRole') !== 'Teacher') {
+                window.location.href = 'login.html';
+            }
+
+            // Add event listeners to score inputs
+            document.querySelectorAll('.score-input').forEach(input => {
+                input.addEventListener('change', calculateGrade);
+            });
+        });
+
+        function loadGradeForm() {
+            const gradeClass = document.getElementById('gradeClass').value;
+            const form = document.getElementById('gradeForm');
+            const msg = document.getElementById('selectGradeMsg');
+
+            if (gradeClass) {
+                form.style.display = 'block';
+                msg.style.display = 'none';
+            } else {
+                form.style.display = 'none';
+                msg.style.display = 'block';
+            }
+        }
+
+        function calculateGrade(event) {
+            const score = parseInt(event.target.value) || 0;
+            let grade = '-';
+            
+            if (score >= 90) grade = 'A';
+            else if (score >= 80) grade = 'B';
+            else if (score >= 70) grade = 'C';
+            else if (score >= 60) grade = 'D';
+            else if (score > 0) grade = 'F';
+
+            event.target.closest('tr').querySelector('.grade-display').textContent = grade;
+        }
+
+        function resetGrades() {
+            document.querySelectorAll('.score-input').forEach(input => {
+                input.value = '';
+            });
+            document.querySelectorAll('.grade-display').forEach(display => {
+                display.textContent = '-';
+            });
+        }
+
+        document.getElementById('gradeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Grades saved successfully!');
+            resetGrades();
+        });
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

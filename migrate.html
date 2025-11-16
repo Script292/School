@@ -1,0 +1,212 @@
+<!-- Migration Tool: Convert localStorage to Firebase -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Data Migration</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Data Migration</div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>Migrate Local Data to Firebase</h1>
+            <p>Transfer your locally stored school data to the cloud</p>
+        </div>
+
+        <section class="settings-card">
+            <h2>📋 Available Local Data</h2>
+            <div id="localDataStatus">
+                <p style="color: #666;">Checking your browser's local storage...</p>
+            </div>
+        </section>
+
+        <section class="settings-card">
+            <h2>⚙️ Migration Options</h2>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn-success" onclick="migrateAllData()">✓ Migrate All Data</button>
+                <button class="btn-warning" onclick="previewData()">👁️ Preview Data</button>
+                <button class="btn-danger" onclick="clearAllData()">🗑️ Clear All Local Data</button>
+            </div>
+            <p style="margin-top: 1rem; color: #999; font-size: 0.9rem;">
+                💡 Tip: Migrate All Data will upload everything from localStorage to Firebase Realtime Database.
+            </p>
+        </section>
+
+        <section class="settings-card">
+            <h2>📊 Migration Log</h2>
+            <div id="migrationLog" style="background: #f9f9f9; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; max-height: 400px; overflow-y: auto; border: 1px solid #eee;">
+                <p style="color: #999;">Awaiting action...</p>
+            </div>
+        </section>
+
+        <section class="settings-card">
+            <div style="display: flex; gap: 8px;">
+                <a href="setup.html" class="btn-primary">← Back to Setup</a>
+                <a href="index.html" class="btn-cancel">Go Home</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Shkolo</p>
+        </div>
+    </footer>
+
+    <script>
+        let logMessages = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logMessages.push(`[${timestamp}] ${message}`);
+            updateLogDisplay();
+            console.log(message);
+        }
+
+        function updateLogDisplay() {
+            const log = document.getElementById('migrationLog');
+            log.innerHTML = logMessages.map(msg => `<div>${escapeHtml(msg)}</div>`).join('');
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Check and display local data on load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLocalData();
+        });
+
+        function checkLocalData() {
+            addLog('🔍 Checking browser localStorage...', 'info');
+            
+            const keys = ['school', 'setupComplete', 'schoolCode', 'registeredUsers', 'studentsData', 'teachersData', 'classesData', 'timetables', 'markingPeriods'];
+            const status = document.getElementById('localDataStatus');
+            let html = '<table class="management-table" style="width:100%;"><thead><tr><th>Key</th><th>Status</th><th>Size</th></tr></thead><tbody>';
+
+            let hasData = false;
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    hasData = true;
+                    const size = (new Blob([value]).size / 1024).toFixed(2);
+                    html += `<tr><td><strong>${key}</strong></td><td style="color: #28a745;">✓ Found</td><td>${size} KB</td></tr>`;
+                } else {
+                    html += `<tr><td>${key}</td><td style="color: #999;">-</td><td>-</td></tr>`;
+                }
+            });
+
+            html += '</tbody></table>';
+
+            if (hasData) {
+                html = '<p style="color: #28a745; margin-bottom: 1rem;">✓ Found local data! Ready to migrate.</p>' + html;
+            } else {
+                html = '<p style="color: #999;">No local data found. You can start fresh or restore from backup.</p>' + html;
+            }
+
+            status.innerHTML = html;
+        }
+
+        function previewData() {
+            addLog('📋 Generating data preview...', 'info');
+            
+            const keys = ['school', 'setupComplete', 'schoolCode', 'registeredUsers', 'studentsData', 'teachersData', 'classesData', 'timetables', 'markingPeriods'];
+            const preview = {};
+
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    try {
+                        preview[key] = JSON.parse(value);
+                    } catch (e) {
+                        preview[key] = value;
+                    }
+                }
+            });
+
+            const previewText = JSON.stringify(preview, null, 2);
+            const blob = new Blob([previewText], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'shkolo-data-preview.json';
+            a.click();
+
+            addLog('✓ Downloaded data preview as JSON', 'success');
+        }
+
+        async function migrateAllData() {
+            if (!confirm('Migrate all local data to Firebase? This cannot be undone.')) {
+                addLog('❌ Migration cancelled by user', 'warning');
+                return;
+            }
+
+            addLog('🚀 Starting migration to Firebase...', 'info');
+
+            const keys = ['school', 'setupComplete', 'schoolCode', 'registeredUsers', 'studentsData', 'teachersData', 'classesData', 'timetables', 'markingPeriods'];
+            let migrated = 0;
+            let errors = 0;
+
+            for (const key of keys) {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    try {
+                        await storageDB.setItem(key, value);
+                        addLog(`✓ Migrated: ${key}`, 'success');
+                        migrated++;
+                    } catch (err) {
+                        addLog(`❌ Failed to migrate ${key}: ${err.message}`, 'error');
+                        errors++;
+                    }
+                }
+            }
+
+            addLog(`\n📊 Migration Complete!\n   ✓ Migrated: ${migrated} items\n   ❌ Errors: ${errors}`, 'success');
+
+            if (errors === 0) {
+                addLog('🎉 All data successfully uploaded to Firebase!', 'success');
+                setTimeout(() => {
+                    if (confirm('Migration successful! Redirect to login page?')) {
+                        window.location.href = 'login.html';
+                    }
+                }, 2000);
+            }
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ This will DELETE all local browser data. Make sure you migrated to Firebase first!\n\nContinue?')) {
+                addLog('❌ Clear cancelled', 'warning');
+                return;
+            }
+
+            if (!confirm('Really? This is irreversible!')) {
+                addLog('❌ Clear cancelled', 'warning');
+                return;
+            }
+
+            addLog('🗑️ Clearing all local storage...', 'info');
+            localStorage.clear();
+            addLog('✓ All local data cleared', 'success');
+            checkLocalData();
+        }
+    </script>
+</body>
+</html>

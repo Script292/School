@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School - Mark Attendance</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Shkolo - Teacher Portal</div>
+            <ul class="nav-menu">
+                <li><a href="teacher-dashboard.html">Dashboard</a></li>
+                <li><a href="teacher-classes.html">My Classes</a></li>
+                <li><a href="teacher-attendance.html">Mark Attendance</a></li>
+                <li><a href="teacher-grades.html">Grades</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="management-container">
+        <div class="management-header">
+            <h1>Mark Attendance</h1>
+            <p>Record student attendance for your classes</p>
+        </div>
+
+        <!-- Attendance Form -->
+        <section class="settings-card">
+            <h2>Mark Attendance</h2>
+
+            <div class="search-filter">
+                <select class="filter-select" id="classSelect" onchange="loadStudents()">
+                    <option value="">Select Class</option>
+                    <option value="Grade 9-A">Grade 9-A</option>
+                    <option value="Grade 10-A">Grade 10-A</option>
+                    <option value="Grade 11-B">Grade 11-B</option>
+                </select>
+                <input type="date" id="attendanceDate" class="search-input">
+            </div>
+
+            <form id="attendanceForm" style="display: none;">
+                <div class="attendance-checkboxes-large">
+                    <div class="student-row">
+                        <label>
+                            <input type="checkbox" checked class="present-check"> 
+                            001 - Ahmed Hassan
+                        </label>
+                    </div>
+                    <div class="student-row">
+                        <label>
+                            <input type="checkbox" class="present-check"> 
+                            002 - Fatima Ahmed
+                        </label>
+                    </div>
+                    <div class="student-row">
+                        <label>
+                            <input type="checkbox" checked class="present-check"> 
+                            003 - Mohamed Ali
+                        </label>
+                    </div>
+                    <div class="student-row">
+                        <label>
+                            <input type="checkbox" checked class="present-check"> 
+                            004 - Sarah Johnson
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button type="submit" class="btn-success" style="flex: 1;">✓ Submit Attendance</button>
+                    <button type="button" class="btn-cancel" onclick="resetAttendance()" style="flex: 1;">Reset</button>
+                </div>
+            </form>
+
+            <p id="selectClassMsg" style="text-align: center; color: #999; padding: 2rem;">
+                Please select a class to mark attendance
+            </p>
+        </section>
+
+        <!-- Attendance History -->
+        <section class="settings-card">
+            <h2>Recent Attendance Records</h2>
+            <table class="management-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Class</th>
+                        <th>Total</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2025-11-15</td>
+                        <td>Grade 9-A</td>
+                        <td>38</td>
+                        <td>36</td>
+                        <td>2</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                    <tr>
+                        <td>2025-11-14</td>
+                        <td>Grade 10-A</td>
+                        <td>40</td>
+                        <td>39</td>
+                        <td>1</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 All rights reserved! Created by Ivaylo Terziev</p>
+            <p><a href="contact.html">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('userRole') !== 'Teacher') {
+                window.location.href = 'login.html';
+            }
+
+            // Set today's date
+            document.getElementById('attendanceDate').valueAsDate = new Date();
+        });
+
+        function loadStudents() {
+            const classSelect = document.getElementById('classSelect').value;
+            const form = document.getElementById('attendanceForm');
+            const msg = document.getElementById('selectClassMsg');
+
+            if (classSelect) {
+                form.style.display = 'block';
+                msg.style.display = 'none';
+            } else {
+                form.style.display = 'none';
+                msg.style.display = 'block';
+            }
+        }
+
+        function resetAttendance() {
+            document.querySelectorAll('.present-check').forEach(cb => {
+                cb.checked = false;
+            });
+        }
+
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Attendance submitted successfully!');
+            resetAttendance();
+        });
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                localStorage.removeItem('userRole');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>
